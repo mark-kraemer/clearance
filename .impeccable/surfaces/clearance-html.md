@@ -1,11 +1,11 @@
 ---
 version: 1
-slug: "pipelines-html"
-primary_target: "pipelines.html"
+slug: "clearance-html"
+primary_target: "clearance.html"
 related_targets: []
 ---
 
-# Surface: pipelines.html (the whole app shell, prototyped as one page)
+# Surface: clearance.html (the whole app shell, prototyped as one page)
 
 Scope and mode: Operate. A macOS control room for concurrent pipeline runs; the user completes one task here: find the run that needs them, read its gate, answer in a line.
 

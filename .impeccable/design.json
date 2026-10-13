@@ -1,7 +1,7 @@
 {
   "schemaVersion": 2,
   "generatedAt": "2026-10-13T00:00:00Z",
-  "title": "Design System: Pipelines",
+  "title": "Design System: Clearance",
   "extensions": {
     "colorMeta": {
       "accent": {
@@ -549,7 +549,7 @@
   ],
   "narrative": {
     "northStar": "The Mail Inbox for Gates",
-    "overview": "Pipelines plays the macOS productivity canon straight, at the craft level of Linear, Raycast, and Apple Mail: a floating window with a unified title bar, a 320px flat list on the left, the selected item on the right, a status bar below. No invented visual world; the system's job is to disappear so the three run states (needs you, working, done) are the only thing with color in the frame. The chosen direction was the category standard, picked by the user over the dealt direction (seed key 389f75b7).\n\nDensity is desktop-tool density: 13px body, 11px captions, 28px controls, 6-16px internal spacing, hairline 1px borders. Color is almost entirely cool neutral; the single blue accent is reserved for selection, focus, and the one primary action, and three semantic hues carry run state with a glyph and a word beside them every time. Depth is conveyed by tonal surface steps (desk, window chrome, list, pane) and one window shadow; nothing inside the window casts a hard shadow.\n\nThe build follows the system appearance with a manual toggle. Light values are normative in the frontmatter; dark values are carried in the sidecar and in the page's two dark :root blocks, token for token.",
+    "overview": "Clearance plays the macOS productivity canon straight, at the craft level of Linear, Raycast, and Apple Mail: a floating window with a unified title bar, a 320px flat list on the left, the selected item on the right, a status bar below. No invented visual world; the system's job is to disappear so the three run states (needs you, working, done) are the only thing with color in the frame. The chosen direction was the category standard, picked by the user over the dealt direction (seed key 389f75b7).\n\nDensity is desktop-tool density: 13px body, 11px captions, 28px controls, 6-16px internal spacing, hairline 1px borders. Color is almost entirely cool neutral; the single blue accent is reserved for selection, focus, and the one primary action, and three semantic hues carry run state with a glyph and a word beside them every time. Depth is conveyed by tonal surface steps (desk, window chrome, list, pane) and one window shadow; nothing inside the window casts a hard shadow.\n\nThe build follows the system appearance with a manual toggle. Light values are normative in the frontmatter; dark values are carried in the sidecar and in the page's two dark :root blocks, token for token.",
     "keyCharacteristics": [
       "Cool neutral surfaces stepped by tone, one blue accent, three semantic state hues",
       "System font stack at 13px; system mono for issue keys, gate IDs, branches, timestamps",

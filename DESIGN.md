@@ -1,5 +1,5 @@
 ---
-name: Pipelines
+name: Clearance
 description: A macOS control room for concurrent Claude Code pipeline runs, where the run waiting on you is the headline.
 colors:
   accent: "#0a6bf2"
@@ -144,13 +144,13 @@ components:
     width: "560px"
 ---
 
-# Design System: Pipelines
+# Design System: Clearance
 
 ## Overview
 
 **Creative North Star: "The Mail Inbox for Gates"**
 
-Pipelines plays the macOS productivity canon straight, at the craft level of Linear, Raycast, and Apple Mail: a floating window with a unified title bar, a 320px flat list on the left, the selected item on the right, a status bar below. No invented visual world; the system's job is to disappear so the three run states (needs you, working, done) are the only thing with color in the frame. The chosen direction was the category standard, picked by the user over the dealt direction (seed key 389f75b7).
+Clearance plays the macOS productivity canon straight, at the craft level of Linear, Raycast, and Apple Mail: a floating window with a unified title bar, a 320px flat list on the left, the selected item on the right, a status bar below. No invented visual world; the system's job is to disappear so the three run states (needs you, working, done) are the only thing with color in the frame. The chosen direction was the category standard, picked by the user over the dealt direction (seed key 389f75b7).
 
 Density is desktop-tool density: 13px body, 11px captions, 28px controls, 6-16px internal spacing, hairline 1px borders. Color is almost entirely cool neutral; the single blue accent is reserved for selection, focus, and the one primary action, and three semantic hues carry run state with a glyph and a word beside them every time. Depth is conveyed by tonal surface steps (desk, window chrome, list, pane) and one window shadow; nothing inside the window casts a hard shadow.
 

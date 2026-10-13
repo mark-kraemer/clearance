@@ -6,7 +6,7 @@ FIRST VIEWPORT: Left, the run list grouped Needs you / Working / Done with statu
 FORM: Category standard, chosen by the user over the roll (seed key 389f75b7, assigned grounded direction 7 declined).
 FINISH: unreviewed and undocumented is unfinished; this build ends with the finish review, the verdict, and DESIGN.md
 -->
-<title>Pipelines</title>
+<title>Clearance</title>
 <style>
 /* Layout: a floating macOS window. Unified title bar, run list left, selected run right, status bar below. */
 :root {
@@ -404,7 +404,7 @@ blockquote { margin: 0 0 10px; padding: 10px 14px; color: var(--fg); background:
 <div class="app" id="app" data-view="list">
   <header class="titlebar">
     <div class="lights" aria-hidden="true"><span></span><span></span><span></span></div>
-    <div class="wtitle"><strong>Pipelines</strong><span class="sub" id="title-sub"></span></div>
+    <div class="wtitle"><strong>Clearance</strong><span class="sub" id="title-sub"></span></div>
     <div class="toolbar">
       <button class="search" id="btn-palette" aria-label="Search runs and commands"><svg class="ico" aria-hidden="true"><use href="#i-search"/></svg><span>Search runs</span><kbd>⌘K</kbd></button>
       <button class="icon-btn" id="btn-new" aria-label="New run"><svg class="ico" aria-hidden="true"><use href="#i-plus"/></svg></button>
@@ -734,7 +734,7 @@ blockquote { margin: 0 0 10px; padding: 10px 14px; color: var(--fg); background:
     $('list').innerHTML = html;
     const needsN = o.needs.length, workN = o.working.length;
     $('title-sub').textContent = needsN ? `${needsN} need${needsN === 1 ? 's' : ''} you · ${workN} working` : `${workN} working · nothing needs you`;
-    document.title = needsN ? `Pipelines (${needsN})` : 'Pipelines';
+    document.title = needsN ? `Clearance (${needsN})` : 'Clearance';
     $('status-left').textContent = `${runs.length} runs`;
     $('sess').textContent = runs.length;
     $('status-mid').textContent = `${needsN} need you · ${workN} working · ${o.done.length} done today`;
@@ -885,7 +885,7 @@ blockquote { margin: 0 0 10px; padding: 10px 14px; color: var(--fg); background:
     const n = document.createElement('div');
     n.className = 'notice'; n.setAttribute('role', 'status');
     n.innerHTML = `<div class="appicon">${icon('bell')}</div><div>
-      <div class="nh"><span>Pipelines</span><span>now</span></div>
+      <div class="nh"><span>Clearance</span><span>now</span></div>
       <div class="nt">${r.key} needs you</div>
       <div class="nb">${r.gate.id} ${GATE_NAME[r.gate.id]} · ${esc(r.gate.summary)}</div>
       <div class="na"><button class="btn primary" data-reply>Reply</button><button class="btn" data-later>Later</button></div></div>`;
@@ -1195,11 +1195,11 @@ blockquote { margin: 0 0 10px; padding: 10px 14px; color: var(--fg); background:
   function toggleTheme() {
     const dark = document.documentElement.dataset.theme === 'dark' || (!document.documentElement.dataset.theme && matchMedia('(prefers-color-scheme: dark)').matches);
     document.documentElement.dataset.theme = dark ? 'light' : 'dark';
-    try { localStorage.setItem('pipelines-theme', document.documentElement.dataset.theme); } catch (err) {}
+    try { localStorage.setItem('clearance-theme', document.documentElement.dataset.theme); } catch (err) {}
     themeIcon();
   }
   $('btn-theme').addEventListener('click', toggleTheme);
-  try { const t = localStorage.getItem('pipelines-theme'); if (t === 'dark' || t === 'light') document.documentElement.dataset.theme = t; } catch (err) {}
+  try { const t = localStorage.getItem('clearance-theme'); if (t === 'dark' || t === 'light') document.documentElement.dataset.theme = t; } catch (err) {}
   themeIcon();
 
   /* Boot: the longest-waiting run is selected, and one working run reaches a gate after a while. */

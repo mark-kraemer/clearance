@@ -63,7 +63,7 @@ Terminology: run (one pipeline session), stage (plan, implement, review, PR, fee
 
 - Standing visual preference (user's choice, 2026-10-13): the category standard for a macOS productivity tool, played straight. No invented visual world. Quality bar: Linear, Raycast, and Apple's own Mail / Things 3 grammar (split views, a flat sidebar list, system font, native selection and toolbar).
 - The pipeline's existing marks (○ pending, ● active, ✓ done, – skipped) and the gate numbering G1 to G5 are product vocabulary and are kept.
-- Working name in the prototype: "Pipelines". Not final.
+- Name: "Clearance" (chosen 2026-10-13). Air-traffic sense: every run holds at a gate until you clear it.
 
 ## Evidence on Hand
 
