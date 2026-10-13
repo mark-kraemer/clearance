@@ -1,0 +1,30 @@
+{
+  "name": "clearance",
+  "version": "0.1.0",
+  "description": "A Mac control room for concurrent Claude Code pipeline runs.",
+  "private": true,
+  "main": "dist/main.js",
+  "type": "module",
+  "scripts": {
+    "build": "node scripts/build.mjs",
+    "start": "pnpm build && electron .",
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit"
+  },
+  "license": "UNLICENSED",
+  "devDependencies": {
+    "@modelcontextprotocol/sdk": "1.19.1",
+    "@types/node": "24.7.0",
+    "chokidar": "4.0.3",
+    "electron": "38.2.1",
+    "esbuild": "0.25.10",
+    "typescript": "5.9.3",
+    "vitest": "3.2.4"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "electron",
+      "esbuild"
+    ]
+  }
+}
