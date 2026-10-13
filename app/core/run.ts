@@ -21,6 +21,7 @@ export interface SessionFile {
 export interface RegistryEntry {
   pid?: number;
   sessionId?: string;
+  cwd?: string;
   status?: string;
   hostSessionId?: string;
   updatedAt?: number;

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { initialStream, reduceStream } from '../app/core/stream';
+import { initialStream, reduceStream, type StreamState } from '../app/core/stream';
 
 // Event shapes follow `claude -p --output-format stream-json`: one JSON
 // object per line, each carrying the session_id.
@@ -12,7 +12,7 @@ const bash = { type: 'assistant', session_id: sid, message: { id: 'm2', role: 'a
 const planText = { type: 'assistant', session_id: sid, message: { id: 'm3', role: 'assistant', content: [{ type: 'text', text: '**What ships:** the closer.\n\nImplement?' }] } };
 const result = { type: 'result', subtype: 'success', session_id: sid, result: '**What ships:** the closer.\n\nImplement?', duration_ms: 1200, is_error: false };
 
-const run = (events: unknown[], stage: 'plan' | 'implement' | 'review' = 'plan') => events.reduce((s, e) => reduceStream(s, e, { now: 1000, activeStage: stage }), initialStream());
+const run = (events: unknown[], stage: 'plan' | 'implement' | 'review' = 'plan') => events.reduce<StreamState>((s, e) => reduceStream(s, e, { now: 1000, activeStage: stage }), initialStream());
 
 describe('reduceStream', () => {
   it('records the session id from init and marks the run working', () => {

@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "description": "A Mac control room for concurrent Claude Code pipeline runs.",
   "private": true,
-  "main": "dist/main.js",
+  "main": "dist/main.cjs",
   "type": "module",
   "scripts": {
     "build": "node scripts/build.mjs",
