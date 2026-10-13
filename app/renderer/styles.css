@@ -135,7 +135,7 @@ button:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
 .row .wait { display: block; font-size: 12px; color: var(--fg-2); font-variant-numeric: tabular-nums; text-align: right; line-height: 19px; }
 .row.needs .wait { color: var(--attn); font-weight: 600; }
 .row .num { font-size: 11px; color: var(--fg-3); font-variant-numeric: tabular-nums; text-align: right; display: block; opacity: 0; transition: opacity .12s; }
-.list:hover .row .num, .list:focus-within .row .num, .app.meta .row .num { opacity: 1; }
+.list:hover .row .num, .list:focus-within .row .num, .app.cmd-held .row .num { opacity: 1; }
 .glyph { color: var(--fg-3); }
 .glyph.attn { color: var(--attn); }
 .glyph.work { color: var(--work); }

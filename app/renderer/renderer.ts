@@ -385,11 +385,11 @@ $('detail').addEventListener('keydown', (e) => {
   if (e.key === 'Enter' && (e.metaKey || e.ctrlKey) && document.querySelector('[data-perm="allow"]')) { e.preventDefault(); (document.querySelector('[data-perm="allow"]') as HTMLElement).click(); }
 });
 
-document.addEventListener('keyup', (e) => { if (e.key === 'Meta') $('app').classList.remove('meta'); });
-window.addEventListener('blur', () => $('app').classList.remove('meta'));
+document.addEventListener('keyup', (e) => { if (e.key === 'Meta') $('app').classList.remove('cmd-held'); });
+window.addEventListener('blur', () => $('app').classList.remove('cmd-held'));
 document.addEventListener('keydown', (e) => {
   const mod = e.metaKey || e.ctrlKey;
-  if (e.key === 'Meta') $('app').classList.add('meta');
+  if (e.key === 'Meta') $('app').classList.add('cmd-held');
   if (mod && e.key === 'k') { e.preventDefault(); openPalette(); return; }
   if (mod && e.key === 'n') { e.preventDefault(); void openSheet(); return; }
   if (!$('sheet').hidden) return;

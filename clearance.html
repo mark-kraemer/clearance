@@ -150,7 +150,7 @@ button:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
 .row .wait { display: block; font-size: 12px; color: var(--fg-2); font-variant-numeric: tabular-nums; text-align: right; line-height: 19px; }
 .row.needs .wait { color: var(--attn); font-weight: 600; }
 .row .num { font-size: 11px; color: var(--fg-3); font-variant-numeric: tabular-nums; text-align: right; display: block; opacity: 0; transition: opacity .12s; }
-.list:hover .row .num, .list:focus-within .row .num, .app.meta .row .num { opacity: 1; }
+.list:hover .row .num, .list:focus-within .row .num, .app.cmd-held .row .num { opacity: 1; }
 .glyph { color: var(--fg-3); }
 .glyph.attn { color: var(--attn); }
 .glyph.work { color: var(--work); }
@@ -956,11 +956,11 @@ blockquote { margin: 0 0 10px; padding: 10px 14px; color: var(--fg); background:
     if (e.target.id === 'answer' && e.key === 'Escape') { e.target.blur(); const row = $('list').querySelector('.row[aria-selected="true"]'); if (row) row.focus(); }
   });
 
-  document.addEventListener('keyup', (e) => { if (e.key === 'Meta') $('app').classList.remove('meta'); });
-  window.addEventListener('blur', () => $('app').classList.remove('meta'));
+  document.addEventListener('keyup', (e) => { if (e.key === 'Meta') $('app').classList.remove('cmd-held'); });
+  window.addEventListener('blur', () => $('app').classList.remove('cmd-held'));
   document.addEventListener('keydown', (e) => {
     const mod = e.metaKey || e.ctrlKey;
-    if (e.key === 'Meta') $('app').classList.add('meta');
+    if (e.key === 'Meta') $('app').classList.add('cmd-held');
     if (mod && e.key === 'k') { e.preventDefault(); openPalette(); return; }
     if (mod && e.key === 'n') { e.preventDefault(); openSheet(); return; }
     if (!$('sheet').hidden) return;
