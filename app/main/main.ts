@@ -1,12 +1,12 @@
 import { execFile } from 'node:child_process';
 import { join } from 'node:path';
-import { BrowserWindow, Notification, app, globalShortcut, ipcMain, nativeTheme, shell } from 'electron';
+import { BrowserWindow, Notification, app, dialog, globalShortcut, ipcMain, nativeTheme, shell } from 'electron';
 
 import { groupRuns } from '../core/order';
 import type { Run } from '../core/types';
 import { OwnedRuns, type StartRunInput } from './owned';
 import { ensureTray, updateTray } from './tray';
-import { listRepos } from './repos';
+import { chooseRepo, listRepos } from './repos';
 import { ObservedSources } from './sources';
 
 let win: BrowserWindow | null = null;
@@ -139,6 +139,11 @@ ipcMain.handle('permission', (_e, id: string, requestId: string, allow: boolean)
 ipcMain.handle('start-run', (_e, input: StartRunInput) => owned.begin(input));
 ipcMain.handle('clear-run', (_e, id: string) => owned.clear(id));
 ipcMain.handle('list-repos', () => listRepos());
+ipcMain.handle('choose-repo', async () => {
+  const picked = await dialog.showOpenDialog(win!, { title: 'Choose a repository', buttonLabel: 'Choose', properties: ['openDirectory'] });
+  if (picked.canceled || !picked.filePaths[0]) return { ok: false, canceled: true };
+  return chooseRepo(picked.filePaths[0]);
+});
 
 app.whenReady().then(async () => {
   createWindow();

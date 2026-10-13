@@ -21,4 +21,5 @@ contextBridge.exposeInMainWorld('clearance', {
   startRun: (input: unknown) => ipcRenderer.invoke('start-run', input),
   clearRun: (id: string) => ipcRenderer.invoke('clear-run', id),
   listRepos: () => ipcRenderer.invoke('list-repos'),
+  chooseRepo: () => ipcRenderer.invoke('choose-repo'),
 });

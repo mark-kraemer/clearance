@@ -15,6 +15,7 @@ import { GATE_NAME, inferGateId, normalizeQuestions } from '../core/transcript';
 import { initialStream, reduceStream, type StreamState } from '../core/stream';
 import type { Gate, GateQuestion, Run, RunKind, Stage, StageId, StoreEntry } from '../core/types';
 import { APP_SUPPORT_DIR } from './paths';
+import { defaultBranch } from './repos';
 
 const execFileP = promisify(execFile);
 
@@ -455,14 +456,4 @@ async function resolveClaude(): Promise<string> {
 function summarize(input: Record<string, unknown>): string {
   const s = String(input.command || input.file_path || input.description || input.url || Object.values(input)[0] || '');
   return s.length > 80 ? s.slice(0, 79) + '…' : s;
-}
-
-async function defaultBranch(repo: string): Promise<string> {
-  try {
-    const { stdout } = await execFileP('git', ['-C', repo, 'symbolic-ref', '--short', 'refs/remotes/origin/HEAD']);
-    return stdout.trim().replace(/^origin\//, '');
-  } catch {
-    const { stdout } = await execFileP('git', ['-C', repo, 'rev-parse', '--abbrev-ref', 'HEAD']);
-    return stdout.trim();
-  }
 }

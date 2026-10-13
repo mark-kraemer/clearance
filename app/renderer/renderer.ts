@@ -16,6 +16,7 @@ interface Api {
   startRun(input: { kind: RunKind; task: string; repoPath: string; baseBranch?: string }): Promise<{ ok: boolean; id?: string; error?: string }>;
   clearRun(id: string): Promise<{ ok: boolean }>;
   listRepos(): Promise<{ path: string; label: string; baseBranch: string }[]>;
+  chooseRepo(): Promise<{ ok: boolean; canceled?: boolean; error?: string; repo?: { path: string; label: string; baseBranch: string } }>;
 }
 declare global {
   interface Window {
@@ -423,6 +424,25 @@ document.addEventListener('keydown', (e) => {
 /* New run sheet */
 let nrKind: RunKind = 'feature';
 let repos: { path: string; label: string; baseBranch: string }[] = [];
+const CHOOSE = '__choose__';
+let repoPick = '';
+function renderRepos(selected: string): void {
+  const sel = $('nr-repo') as HTMLSelectElement;
+  sel.innerHTML = repos.map((r) => `<option value="${esc(r.path)}">${esc(r.label)}</option>`).join('') + `<option value="${CHOOSE}">Choose folder…</option>`;
+  sel.value = repos.some((r) => r.path === selected) ? selected : repos[0]?.path || '';
+  repoPick = sel.value;
+}
+async function pickRepo(): Promise<void> {
+  const res = await api.chooseRepo();
+  if (res.ok && res.repo) {
+    repos = [res.repo, ...repos.filter((r) => r.path !== res.repo!.path)];
+    renderRepos(res.repo.path);
+  } else {
+    renderRepos(repoPick);
+    if (!res.canceled) { $('nr-err').textContent = res.error || 'Could not use that folder.'; $('nr-err').hidden = false; }
+  }
+  updateDerived();
+}
 function updateDerived(): void {
   const raw = ($('nr-task') as HTMLInputElement).value.trim();
   const branch = slug(raw);
@@ -439,8 +459,7 @@ async function openSheet(): Promise<void> {
   ($('nr-task') as HTMLInputElement).value = '';
   $('nr-err').hidden = true;
   if (!repos.length) repos = await api.listRepos();
-  const sel = $('nr-repo') as HTMLSelectElement;
-  sel.innerHTML = repos.length ? repos.map((r) => `<option value="${esc(r.path)}">${esc(r.label)}</option>`).join('') : '<option value="">No repositories found</option>';
+  renderRepos(repoPick);
   updateDerived();
   $('sheet').hidden = false;
   $('nr-task').focus();
@@ -451,7 +470,7 @@ async function startRun(): Promise<void> {
   const repoPath = ($('nr-repo') as HTMLSelectElement).value;
   const err = $('nr-err');
   if (!task) { err.textContent = 'Name the task. Put the issue ID first when there is one.'; err.hidden = false; $('nr-task').focus(); return; }
-  if (!repoPath) { err.textContent = 'No repository to start in. Make a worktree in Claude Code once and it appears here.'; err.hidden = false; return; }
+  if (!repoPath || repoPath === CHOOSE) { err.textContent = 'Choose a repository folder to start in.'; err.hidden = false; return; }
   ($('nr-start') as HTMLButtonElement).disabled = true;
   const res = await api.startRun({ kind: nrKind, task, repoPath, baseBranch: repos.find((r) => r.path === repoPath)?.baseBranch });
   ($('nr-start') as HTMLButtonElement).disabled = false;
@@ -468,7 +487,13 @@ $('sheet').addEventListener('click', (e) => {
   if (k) { nrKind = k.dataset.kind as RunKind; $('sheet').querySelectorAll('[data-kind]').forEach((b) => b.setAttribute('aria-pressed', String(b === k))); updateDerived(); }
 });
 $('nr-task').addEventListener('input', () => { $('nr-err').hidden = true; updateDerived(); });
-$('nr-repo').addEventListener('change', updateDerived);
+$('nr-repo').addEventListener('change', () => {
+  const sel = $('nr-repo') as HTMLSelectElement;
+  if (sel.value === CHOOSE) { void pickRepo(); return; }
+  repoPick = sel.value;
+  $('nr-err').hidden = true;
+  updateDerived();
+});
 $('newrun-form').addEventListener('submit', (e) => { e.preventDefault(); void startRun(); });
 $('sheet').addEventListener('keydown', (e) => {
   if (e.key === 'Escape') { e.preventDefault(); closeSheet(); }
