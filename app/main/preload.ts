@@ -15,6 +15,7 @@ contextBridge.exposeInMainWorld('clearance', {
   },
   ready: () => ipcRenderer.invoke('ready'),
   openInClaude: (id: string) => ipcRenderer.invoke('open-in-claude', id),
+  continueInClaude: (id: string) => ipcRenderer.invoke('continue-in-claude', id),
   answer: (id: string, text: string, answers?: Record<string, string>) => ipcRenderer.invoke('answer', id, text, answers),
   decidePermission: (id: string, requestId: string, allow: boolean) => ipcRenderer.invoke('permission', id, requestId, allow),
   startRun: (input: unknown) => ipcRenderer.invoke('start-run', input),

@@ -29,6 +29,8 @@ claude -p --input-format stream-json --output-format stream-json --verbose \
 
 Auto mode decides routine permissions. What it escalates, and every `AskUserQuestion`, reaches a small MCP server bundled with the app, which forwards the request to Clearance and returns your decision. Gates that end the turn with a question are answered by sending a message to the run. A run whose process exited resumes with `--resume` when you send to it.
 
+**Switching** works for owned runs. Continue in Claude Code (⌘O) stops Clearance's process and opens `claude://resume?session=<id>`, which makes the desktop app import the session with its history. The first import gives the session a new id, and Clearance follows it through the session file the desktop writes at the run's worktree. While the desktop holds the run, Clearance shows its gate and activity but cannot answer: a second `claude` on one session forks the conversation, and neither side sees the other's turns. Archive the session in Claude Code to stop its process; the composer comes back, and sending resumes the run here. Continue in Claude Code again reopens the same session with Clearance's turns in it. Runs started in the desktop app don't switch, because archiving one can remove the worktree the desktop made for it.
+
 Clearance never reads, stores, or proxies Claude credentials. It only runs the unmodified `claude` binary you are already signed into.
 
 ## Develop

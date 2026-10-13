@@ -5,10 +5,11 @@ import { join } from 'node:path';
 import chokidar, { type FSWatcher } from 'chokidar';
 
 import { allStoreEntries } from '../core/stages';
+import type { DesktopView } from '../core/handoff';
 import { observedRun, type RegistryEntry, type SessionFile } from '../core/run';
-import { activityFromTranscript, gateFromTranscript, parseJsonl } from '../core/transcript';
+import { activityFromTranscript, gateFromTranscript, parseJsonl, questionLine } from '../core/transcript';
 import type { Run, StoreEntry } from '../core/types';
-import { DESKTOP_SESSIONS_DIR, PLUGIN_STORE_DIR, SESSIONS_REGISTRY_DIR, projectDirFor } from './paths';
+import { DESKTOP_SESSIONS_DIR, PLUGIN_STORE_DIR, PROJECTS_DIR, SESSIONS_REGISTRY_DIR, projectDirFor } from './paths';
 
 const TAIL_BYTES = 768 * 1024;
 const DEBOUNCE_MS = 350;
@@ -33,6 +34,8 @@ export class ObservedSources extends EventEmitter {
   private watchers: FSWatcher[] = [];
   private transcriptWatcher: FSWatcher | null = null;
   private watchedProjectDirs = new Set<string>();
+  private tracked = new Map<string, string>();
+  private views = new Map<string, DesktopView>();
   private timer: NodeJS.Timeout | null = null;
   private refreshing = false;
   private pendingRefresh = false;
@@ -40,6 +43,29 @@ export class ObservedSources extends EventEmitter {
 
   storeEntry(cliSessionId: string): StoreEntry | null {
     return this.store.get(cliSessionId) ?? null;
+  }
+
+  /** Every desktop session file, for finding the one an import created. */
+  desktopSessions(): SessionFile[] {
+    return [...this.sessions.values()].map((c) => c.value);
+  }
+
+  /** The desktop's side of a session Clearance handed over, as of the last refresh. */
+  desktopView(cliSessionId: string): DesktopView | null {
+    return this.views.get(cliSessionId) ?? null;
+  }
+
+  /**
+   * Sessions Clearance handed to the desktop app, by cli id and cwd. They are
+   * read even without a pipeline store entry and even once archived, because
+   * archiving is how the user hands a run back.
+   */
+  track(sessions: { cliSessionId: string; cwd: string }[]): void {
+    const next = new Map(sessions.map((s) => [s.cliSessionId, s.cwd]));
+    const same = next.size === this.tracked.size && [...next].every(([id, cwd]) => this.tracked.get(id) === cwd);
+    if (same) return;
+    this.tracked = next;
+    this.schedule();
   }
 
   async start(): Promise<void> {
@@ -88,6 +114,7 @@ export class ObservedSources extends EventEmitter {
         const activity = lines.length ? activityFromTranscript(lines, 12) : [];
         runs.push(observedRun({ entry, session, registry, gate, activity }));
       }
+      this.views = await this.loadViews();
       this.runs = runs;
       this.emit('runs', runs);
     } catch (err) {
@@ -99,6 +126,33 @@ export class ObservedSources extends EventEmitter {
         this.schedule();
       }
     }
+  }
+
+  private async loadViews(): Promise<Map<string, DesktopView>> {
+    const views = new Map<string, DesktopView>();
+    for (const [id, trackedCwd] of this.tracked) {
+      const session = this.sessions.get(id)?.value ?? null;
+      if (!session) continue;
+      const registry = this.registry.get(id) ?? null;
+      const lines = await this.loadTranscript(id, session.cwd || trackedCwd);
+      const active = this.store.get(id)?.stages.find((s) => s.status === 'active')?.id ?? null;
+      const summary = session.postTurnSummary;
+      const blocked = summary?.status_category === 'blocked' || !!summary?.needs_action;
+      const busy = registry?.status === 'busy';
+      // An imported session may have no post-turn summary yet, so a final
+      // turn that asks a question counts as a gate, as it does for a run
+      // Clearance holds.
+      const last = lines.length && !busy ? gateFromTranscript(lines, { activeStage: active, blocked: true, needsAction: summary?.needs_action || '' }) : null;
+      views.set(id, {
+        hostSessionId: session.sessionId,
+        open: !!registry || !session.isArchived,
+        busy,
+        gate: last && (blocked || last.questions?.length || questionLine(last.text)) ? last : null,
+        activity: lines.length ? activityFromTranscript(lines, 12) : [],
+        lastActivity: session.lastActivityAt,
+      });
+    }
+    return views;
   }
 
   private async loadStore(): Promise<void> {
@@ -180,10 +234,27 @@ export class ObservedSources extends EventEmitter {
     for (const path of [...this.sessionFiles.keys()]) if (!files.includes(path)) this.sessionFiles.delete(path);
   }
 
+  /**
+   * Claude Code shortens a long project folder name and appends a hash, so a
+   * deep worktree's transcript is not where `projectDirFor` puts it. The
+   * shortened name keeps its start; look among the folders that share it.
+   */
+  private async findTranscriptDir(id: string, cwd: string): Promise<string | null> {
+    const direct = projectDirFor(cwd);
+    if (existsSync(join(direct, `${id}.jsonl`))) return direct;
+    const prefix = direct.slice(PROJECTS_DIR.length + 1, PROJECTS_DIR.length + 1 + 80);
+    try {
+      for (const name of await readdir(PROJECTS_DIR)) if (name.startsWith(prefix) && existsSync(join(PROJECTS_DIR, name, `${id}.jsonl`))) return join(PROJECTS_DIR, name);
+    } catch {
+      // No projects folder yet.
+    }
+    return null;
+  }
+
   private async loadTranscript(id: string, cwd: string): Promise<unknown[]> {
-    const dir = projectDirFor(cwd);
+    const dir = await this.findTranscriptDir(id, cwd);
+    if (!dir) return [];
     const path = join(dir, `${id}.jsonl`);
-    if (!existsSync(path)) return [];
     if (!this.watchedProjectDirs.has(dir) && this.transcriptWatcher) {
       this.watchedProjectDirs.add(dir);
       this.transcriptWatcher.add(dir);

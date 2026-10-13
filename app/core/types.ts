@@ -73,4 +73,8 @@ export interface Run {
   gate: Gate | null;
   activity: Activity[];
   done?: { label: string; when: number; text?: string };
+  /** Who holds an owned run's session: Clearance's own process, or the desktop app. */
+  heldBy?: 'clearance' | 'desktop';
+  /** While the desktop holds the run, whether it still has it open (Clearance cannot answer until it is archived). */
+  desktopOpen?: boolean;
 }

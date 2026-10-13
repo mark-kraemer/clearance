@@ -7,7 +7,8 @@ import { join } from 'node:path';
 import { createInterface } from 'node:readline';
 import { promisify } from 'node:util';
 
-import { splitTitle } from '../core/run';
+import { desktopHeldState, findImported, type DesktopView } from '../core/handoff';
+import { splitTitle, type SessionFile } from '../core/run';
 import { slug } from '../core/slug';
 import { stageLabel, stageOrder } from '../core/stages';
 import { GATE_NAME, inferGateId, normalizeQuestions } from '../core/transcript';
@@ -37,6 +38,13 @@ interface Persisted {
   branch: string;
   started: number;
   stageHint: StageId | null;
+  /** Absent means Clearance; runs saved before handoff existed are Clearance's. */
+  heldBy?: 'clearance' | 'desktop';
+  /** When the run was last handed to the desktop, until its import is found. */
+  handedAt?: number;
+  hostSessionId?: string;
+  /** Session ids the desktop re-keyed away from, so earlier store entries still resolve. */
+  priorSessionIds?: string[];
 }
 
 interface Pending {
@@ -70,6 +78,7 @@ export class OwnedRuns extends EventEmitter {
   private server: Server | null = null;
   private port = 0;
   private storeLookup: (cliSessionId: string) => StoreEntry | null = () => null;
+  private desktopView: (cliSessionId: string) => DesktopView | null = () => null;
   private claudeBin = 'claude';
   runs: Run[] = [];
 
@@ -80,6 +89,11 @@ export class OwnedRuns extends EventEmitter {
   /** The pipeline plugin's store, so owned runs show the stages the plugin recorded. */
   useStore(lookup: (cliSessionId: string) => StoreEntry | null): void {
     this.storeLookup = lookup;
+  }
+
+  /** The desktop's side of a handed-over session, read by the observed sources. */
+  useDesktop(lookup: (cliSessionId: string) => DesktopView | null): void {
+    this.desktopView = lookup;
   }
 
   async start(): Promise<void> {
@@ -123,6 +137,7 @@ export class OwnedRuns extends EventEmitter {
   async answer(id: string, text: string, answers: Record<string, string> = {}): Promise<{ ok: boolean; error?: string }> {
     const l = this.live.get(id);
     if (!l) return { ok: false, error: 'This run is not owned by Clearance.' };
+    if (l.p.heldBy === 'desktop') return this.takeBack(l, text, answers);
     if (l.pending?.toolName === 'AskUserQuestion') {
       const questions = (l.pending.input.questions as GateQuestion[] | undefined) || [];
       const filled: Record<string, string> = {};
@@ -136,6 +151,78 @@ export class OwnedRuns extends EventEmitter {
     if (!text.trim()) return { ok: false, error: 'Write a line to send.' };
     if (l.exited) this.spawn(l, true);
     this.send(l, text.trim());
+    return { ok: true };
+  }
+
+  /**
+   * Hands the run to the desktop app: Clearance's process stops, and the
+   * returned `claude://resume` link makes the desktop import the session (or
+   * reopen it, if it already knows it). Refused mid-turn, because stopping
+   * the process then would cut the turn off or deny an open request.
+   */
+  async handToDesktop(id: string): Promise<{ ok: true; url: string } | { ok: false; error: string }> {
+    const l = this.live.get(id);
+    if (!l) return { ok: false, error: 'This run is not owned by Clearance.' };
+    if (l.pending) return { ok: false, error: 'Answer the open request first, then continue in Claude Code.' };
+    if (l.child && l.stream.turnOpen) return { ok: false, error: 'The run is mid-turn. Continue in Claude Code once it stops at a gate.' };
+    if (l.child) {
+      const child = l.child;
+      // The desktop must not open the session while this process can still write to it.
+      await new Promise<void>((resolve) => {
+        const force = setTimeout(() => child.kill('SIGKILL'), 5000);
+        child.once('exit', () => {
+          clearTimeout(force);
+          resolve();
+        });
+        child.kill();
+      });
+    }
+    l.p.heldBy = 'desktop';
+    l.p.handedAt = Date.now();
+    this.save();
+    this.publish();
+    return { ok: true, url: `claude://resume?session=${l.p.cliSessionId}` };
+  }
+
+  /** Desktop-held runs, for the observed sources to read. */
+  desktopHeld(): { cliSessionId: string; cwd: string }[] {
+    return [...this.live.values()].filter((l) => l.p.heldBy === 'desktop').map((l) => ({ cliSessionId: l.p.cliSessionId, cwd: l.p.cwd }));
+  }
+
+  /**
+   * Follows the desktop's re-key of a first import, then recomputes the runs
+   * from the desktop's latest side. Called on every observed refresh.
+   */
+  sync(sessions: SessionFile[]): void {
+    let changed = false;
+    for (const l of this.live.values()) {
+      if (l.p.heldBy !== 'desktop' || !l.p.handedAt) continue;
+      const imported = findImported(sessions, { cwd: l.p.cwd, since: l.p.handedAt });
+      if (!imported?.cliSessionId) continue;
+      if (imported.cliSessionId !== l.p.cliSessionId) l.p.priorSessionIds = [...(l.p.priorSessionIds || []), l.p.cliSessionId];
+      l.p.cliSessionId = imported.cliSessionId;
+      l.p.hostSessionId = imported.sessionId;
+      l.p.handedAt = undefined;
+      changed = true;
+    }
+    if (changed) this.save();
+    this.publish();
+  }
+
+  /**
+   * Answering a desktop-held run takes it back, but only once the desktop's
+   * process is gone: a second process on the session would fork it.
+   */
+  private takeBack(l: Live, text: string, answers: Record<string, string>): { ok: boolean; error?: string } {
+    if ((this.desktopView(l.p.cliSessionId)?.open ?? true)) return { ok: false, error: 'This run is open in Claude Code. Archive it there to answer here.' };
+    const chosen = Object.entries(answers).map(([q, a]) => `${q} ${a}`);
+    const message = [...chosen, text.trim()].filter(Boolean).join('\n');
+    if (!message) return { ok: false, error: 'Write a line to send.' };
+    l.p.heldBy = 'clearance';
+    l.p.handedAt = undefined;
+    this.save();
+    this.spawn(l, true);
+    this.send(l, message);
     return { ok: true };
   }
 
@@ -285,13 +372,22 @@ export class OwnedRuns extends EventEmitter {
 
   private toRun(l: Live): Run {
     const p = l.p;
-    const entry = this.storeLookup(p.cliSessionId);
+    const entry = [p.cliSessionId, ...[...(p.priorSessionIds || [])].reverse()].map((id) => this.storeLookup(id)).find((e) => e?.stages.length);
     const stages: Stage[] = entry?.stages.length ? entry.stages : hintedStages(p.kind, p.stageHint);
+    const allClosed = stages.every((s) => s.status === 'done' || s.status === 'skipped');
+    const base = {
+      id: p.id, source: 'owned' as const, cliSessionId: p.cliSessionId, key: p.key, title: p.title, kind: p.kind, cwd: p.cwd, worktree: p.cwd.split('/').pop(), branch: p.branch,
+      repo: p.repoPath.split('/').slice(-2).join('/'), started: p.started, stages,
+    };
+    if (p.heldBy === 'desktop') {
+      const view = this.desktopView(p.cliSessionId);
+      const lastActivity = Math.max(l.lastActivity, view?.lastActivity || 0);
+      return { ...base, ...desktopHeldState(view, allClosed, lastActivity), heldBy: 'desktop', hostSessionId: view?.hostSessionId || p.hostSessionId, lastActivity, activity: view?.activity.length ? view.activity : l.stream.activity };
+    }
     const gate = l.permissionGate || l.stream.gate;
     let status: Run['status'];
     let statusLabel: string;
     let done: Run['done'];
-    const allClosed = stages.every((s) => s.status === 'done' || s.status === 'skipped');
     if (l.exited) {
       status = 'done';
       statusLabel = allClosed ? 'Done' : 'Stopped';
@@ -306,10 +402,7 @@ export class OwnedRuns extends EventEmitter {
       status = 'idle';
       statusLabel = l.stream.lastError || l.stream.activity[0]?.text || 'idle';
     }
-    return {
-      id: p.id, source: 'owned', cliSessionId: p.cliSessionId, key: p.key, title: p.title, kind: p.kind, cwd: p.cwd, worktree: p.cwd.split('/').pop(), branch: p.branch,
-      repo: p.repoPath.split('/').slice(-2).join('/'), started: p.started, lastActivity: l.lastActivity, status, statusLabel, stages, gate: status === 'needs' ? gate : null, activity: l.stream.activity, done,
-    };
+    return { ...base, heldBy: 'clearance', lastActivity: l.lastActivity, status, statusLabel, gate: status === 'needs' ? gate : null, activity: l.stream.activity, done };
   }
 
   private publish(): void {

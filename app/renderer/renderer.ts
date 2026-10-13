@@ -10,6 +10,7 @@ interface Api {
   onNotice(cb: (n: { kind: string; id?: string }) => void): () => void;
   ready(): Promise<Run[]>;
   openInClaude(id: string): Promise<{ kind: 'session' | 'worktree' | 'app' }>;
+  continueInClaude(id: string): Promise<{ ok: boolean; error?: string }>;
   answer(id: string, text: string, answers?: Record<string, string>): Promise<{ ok: boolean; error?: string }>;
   decidePermission(id: string, requestId: string, allow: boolean): Promise<{ ok: boolean; error?: string }>;
   startRun(input: { kind: RunKind; task: string; repoPath: string; baseBranch?: string }): Promise<{ ok: boolean; id?: string; error?: string }>;
@@ -28,6 +29,21 @@ const esc = (s: unknown) => String(s ?? '').replace(/[&<>"]/g, (c) => ({ '&': '&
 const icon = (name: string, cls = '') => `<svg class="ico glyph ${cls}" aria-hidden="true"><use href="#i-${name}"/></svg>`;
 const STAGE_ICON: Record<Stage['status'], string> = { pending: 'pending', active: 'active', done: 'done', skipped: 'skipped' };
 const STAGE_CLS: Record<Stage['status'], string> = { pending: '', active: 'work', done: 'ok', skipped: 'skip' };
+
+/** Clearance can send to the run: it owns it, and the desktop is not holding it open. */
+const answerable = (r: Run) => r.source === 'owned' && !(r.heldBy === 'desktop' && r.desktopOpen);
+/** A run Clearance holds goes to Claude Code by handing it over; any other run is opened there. */
+const toClaude = (r: Run) => r.source === 'owned' && r.heldBy !== 'desktop';
+
+async function jumpToClaude(r: Run): Promise<void> {
+  if (toClaude(r)) {
+    const res = await api.continueInClaude(r.id);
+    toast(res.ok ? `Continuing ${r.key || r.title} in Claude Code` : res.error || 'Could not hand the run over');
+    return;
+  }
+  const res = await api.openInClaude(r.id);
+  toast(res.kind === 'session' ? `Switching to ${r.key || r.title} in Claude Code` : res.kind === 'worktree' ? 'Revealed the worktree in Finder' : 'Opened Claude');
+}
 
 let runs: Run[] = [];
 let selectedId: string | null = null;
@@ -220,13 +236,13 @@ function renderDetail(): void {
     r.branch ? `<span>${icon('branch')}<code>${esc(r.branch)}</code></span>` : '',
     r.pr ? `<span>${icon('pr')}<a href="${esc(r.pr.url)}" target="_blank" rel="noopener"><code>${esc(prPath(r.pr.url))}</code></a> · ${esc(r.pr.state.toLowerCase())}</span>` : '',
     `<span>${icon('clock')}started ${fmtDur(Date.now() - r.started)} ago</span>`,
-    `<span>${r.source === 'owned' ? 'started here' : 'from Claude Code'}</span>`,
+    `<span>${r.source === 'owned' ? (r.heldBy === 'desktop' ? 'started here · in Claude Code' : 'started here') : 'from Claude Code'}</span>`,
   ].filter(Boolean).join('');
   el.innerHTML = `<div class="d-wrap">
     <button class="btn d-back" data-back>${icon('back')}Runs</button>
     <div class="d-head">
       <div class="grow"><span class="key">${esc(r.key)}</span><h1>${esc(r.title)}</h1><div class="meta">${meta}</div></div>
-      <div class="actions"><button class="btn" data-open>${icon('open')}${r.source === 'owned' ? 'Reveal worktree' : 'Open in Claude Code'} <kbd>⌘O</kbd></button></div>
+      <div class="actions">${toClaude(r) ? `<button class="btn" data-reveal>Reveal worktree</button><button class="btn" data-open>${icon('open')}Continue in Claude Code <kbd>⌘O</kbd></button>` : `<button class="btn" data-open>${icon('open')}Open in Claude Code <kbd>⌘O</kbd></button>`}</div>
     </div>
     <div class="rail" aria-label="Stages">${rail}</div>
     ${panel}
@@ -238,7 +254,7 @@ function renderDetail(): void {
 
 function gatePanel(r: Run, g: Gate): string {
   const draft = drafts[r.id] || { text: '', answers: {} };
-  const owned = r.source === 'owned';
+  const owned = answerable(r);
   let body = '';
   if (g.permission) {
     body = `<p class="lede">Auto mode asked for a decision on <code>${esc(g.permission.toolName)}</code>.</p><pre class="perm">${esc(JSON.stringify(g.permission.input, null, 2))}</pre>`;
@@ -250,13 +266,14 @@ function gatePanel(r: Run, g: Gate): string {
   }
   let composer: string;
   if (!owned) {
-    composer = `<div class="composer"><div class="observed-note"><span class="muted">This run belongs to the Claude desktop app, so the answer goes there.</span><button class="btn primary" data-open>${icon('open')}Open in Claude Code <kbd>⌘O</kbd></button></div></div>`;
+    const note = r.source === 'owned' ? 'This run is open in Claude Code. Answer it there, or archive it there to answer here.' : 'This run belongs to the Claude desktop app, so the answer goes there.';
+    composer = `<div class="composer"><div class="observed-note"><span class="muted">${note}</span><button class="btn primary" data-open>${icon('open')}Open in Claude Code <kbd>⌘O</kbd></button></div></div>`;
   } else if (g.permission) {
     composer = `<div class="composer"><div class="field" style="justify-content:flex-end"><button class="btn" data-perm="deny">Deny</button><button class="btn primary" data-perm="allow">Allow once <kbd>⌘↩</kbd></button></div><div class="hint">Deny sends the run back to find another way. Nothing is remembered.</div></div>`;
   } else {
     composer = `<div class="composer">
       <form class="field" id="answer-form"><label class="vh" for="answer">Your answer</label><textarea id="answer" rows="1" placeholder="${g.questions?.length ? 'Anything to add, or just send the choices' : 'One line: go, or fix 1 and 3'}">${esc(draft.text)}</textarea><button class="btn primary" type="submit" id="send">${icon('send')}Send <kbd>⌘↩</kbd></button></form>
-      <div class="hint">Sent to the session as your reply. The pipeline continues from this gate without another stop.</div><div class="err-line" id="answer-err" hidden></div></div>`;
+      <div class="hint">${r.heldBy === 'desktop' ? 'Sending takes the run back from Claude Code and continues from this gate.' : 'Sent to the session as your reply. The pipeline continues from this gate without another stop.'}</div><div class="err-line" id="answer-err" hidden></div></div>`;
   }
   return `<section class="panel attn" aria-label="Open gate">
     <div class="p-head"><span class="gate-id">${esc(g.id)}</span><strong>${esc(g.name)}</strong><span class="since">${icon('clock')}waiting ${fmtDur(Date.now() - g.since)}</span></div>
@@ -269,7 +286,7 @@ function activityPanel(r: Run): string {
   return `<section class="panel" aria-label="Activity">
     <div class="p-head">${working ? icon('work', 'work pulse') : icon('pending', 'work')}<strong>${working ? 'Working' : 'Idle'}</strong><span class="muted">${esc(r.statusLabel)}</span><span class="since">${icon('clock')}${working ? `${fmtDur(Date.now() - r.started)} in` : `${fmtDur(Date.now() - r.lastActivity)} ago`}</span></div>
     <div class="p-body"><ul class="activity">${items}</ul></div>
-    ${r.source === 'owned' ? `<div class="composer"><form class="field" id="answer-form"><label class="vh" for="answer">Message</label><textarea id="answer" rows="1" placeholder="${working ? 'Queue a message for the run' : 'Send a message to continue the run'}">${esc((drafts[r.id] || { text: '' }).text)}</textarea><button class="btn primary" type="submit" id="send">${icon('send')}Send <kbd>⌘↩</kbd></button></form><div class="hint">${working ? 'No gate open. Sending now interrupts between gates.' : 'The last turn ended without a question.'}</div><div class="err-line" id="answer-err" hidden></div></div>` : `<div class="p-foot"><span>${working ? 'No gate open. The next stop is the next gate.' : 'The last turn ended without a question. Nothing is waiting on you.'}</span><button class="btn" data-open>${icon('open')}Open in Claude Code</button></div>`}
+    ${answerable(r) ? `<div class="composer"><form class="field" id="answer-form"><label class="vh" for="answer">Message</label><textarea id="answer" rows="1" placeholder="${working ? 'Queue a message for the run' : 'Send a message to continue the run'}">${esc((drafts[r.id] || { text: '' }).text)}</textarea><button class="btn primary" type="submit" id="send">${icon('send')}Send <kbd>⌘↩</kbd></button></form><div class="hint">${r.heldBy === 'desktop' ? 'Sending takes the run back from Claude Code.' : working ? 'No gate open. Sending now interrupts between gates.' : 'The last turn ended without a question.'}</div><div class="err-line" id="answer-err" hidden></div></div>` : `<div class="p-foot"><span>${r.source === 'owned' ? 'Open in Claude Code. Archive it there to send from here.' : working ? 'No gate open. The next stop is the next gate.' : 'The last turn ended without a question. Nothing is waiting on you.'}</span><button class="btn" data-open>${icon('open')}Open in Claude Code</button></div>`}
   </section>`;
 }
 
@@ -340,7 +357,8 @@ $('detail').addEventListener('click', async (e) => {
     document.querySelector<HTMLTextAreaElement>('#answer')?.focus();
     return;
   }
-  if (t.closest('[data-open]')) { const res = await api.openInClaude(r.id); toast(res.kind === 'session' ? `Switching to ${r.key || r.title} in Claude Code` : res.kind === 'worktree' ? 'Revealed the worktree in Finder' : 'Opened Claude'); return; }
+  if (t.closest('[data-open]')) { await jumpToClaude(r); return; }
+  if (t.closest('[data-reveal]')) { await api.openInClaude(r.id); toast('Revealed the worktree in Finder'); return; }
   if (t.closest('[data-back]')) { select(null); return; }
   const perm = t.closest<HTMLElement>('[data-perm]');
   if (perm && r.gate?.permission) {
@@ -393,10 +411,10 @@ document.addEventListener('keydown', (e) => {
   if (mod && e.key === 'k') { e.preventDefault(); openPalette(); return; }
   if (mod && e.key === 'n') { e.preventDefault(); void openSheet(); return; }
   if (!$('sheet').hidden) return;
-  if (mod && e.key === 'o') { e.preventDefault(); if (selectedId) { void api.openInClaude(selectedId); } return; }
+  if (mod && e.key === 'o') { e.preventDefault(); const r = byId(selectedId); if (r) void jumpToClaude(r); return; }
   if (mod && /^[1-9]$/.test(e.key)) {
     const r = grouped().flat[Number(e.key) - 1];
-    if (r) { e.preventDefault(); select(r.id, { focusComposer: r.source === 'owned' && !!r.gate, focusList: !(r.source === 'owned' && r.gate) }); }
+    if (r) { e.preventDefault(); select(r.id, { focusComposer: answerable(r) && !!r.gate, focusList: !(answerable(r) && r.gate) }); }
     return;
   }
   if (e.key === 'Escape' && !$('palette').hidden) closePalette();
@@ -489,11 +507,11 @@ function runPal(i: number): void {
   const it = [...items, ...cmds][i];
   if (!it) return;
   closePalette();
-  if (it.kind === 'run') { const r = byId(it.id)!; select(it.id, { focusComposer: r.source === 'owned' && !!r.gate, focusList: !(r.source === 'owned' && r.gate) }); }
+  if (it.kind === 'run') { const r = byId(it.id)!; select(it.id, { focusComposer: answerable(r) && !!r.gate, focusList: !(answerable(r) && r.gate) }); }
   else if (it.id === 'new') void openSheet();
   else if (it.id === 'next') { const r = grouped().needs[0]; if (r) select(r.id, { focusList: true }); else toast('Nothing is waiting on you'); }
   else if (it.id === 'theme') toggleTheme();
-  else if (it.id === 'open') { if (selectedId) void api.openInClaude(selectedId); else toast('Select a run first'); }
+  else if (it.id === 'open') { const r = byId(selectedId); if (r) void jumpToClaude(r); else toast('Select a run first'); }
   else if (it.id === 'unhide') { hidden.clear(); try { localStorage.removeItem('clearance-hidden'); } catch { /* ignore */ } render(); }
 }
 function openPalette(): void { palIndex = 0; $('palette').hidden = false; ($('pal-input') as HTMLInputElement).value = ''; renderPalette(); $('pal-input').focus(); }
@@ -530,7 +548,7 @@ function applyRuns(next: Run[]): void {
   if (pendingFocus && byId(pendingFocus)) {
     const id = pendingFocus;
     pendingFocus = null;
-    select(id, { focusComposer: byId(id)?.source === 'owned', focusList: byId(id)?.source !== 'owned' });
+    select(id, { focusComposer: answerable(byId(id)!), focusList: !answerable(byId(id)!) });
     return;
   }
   if (!selectedId || !byId(selectedId)) {
@@ -545,7 +563,7 @@ function applyRuns(next: Run[]): void {
 api.onRuns(applyRuns);
 api.onNotice((n) => {
   if (n.kind === 'focus-run' && n.id) {
-    if (byId(n.id)) select(n.id, { focusComposer: byId(n.id)?.source === 'owned', focusList: byId(n.id)?.source !== 'owned' });
+    if (byId(n.id)) select(n.id, { focusComposer: answerable(byId(n.id)!), focusList: !answerable(byId(n.id)!) });
     else pendingFocus = n.id;
   }
   if (n.kind === 'new-run') void openSheet();

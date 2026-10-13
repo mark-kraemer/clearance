@@ -14,6 +14,7 @@ const observed = new ObservedSources();
 // Inside a packaged app the server script must be a real file, so it is unpacked from the asar.
 const owned = new OwnedRuns(join(__dirname, 'permission-server.mjs').replace('app.asar', 'app.asar.unpacked'));
 owned.useStore((id) => observed.storeEntry(id));
+owned.useDesktop((id) => observed.desktopView(id));
 owned.on('log', (line: string) => { if (process.env.CLEARANCE_DEBUG) console.log(line); });
 const seenGates = new Map<string, number>();
 // The first publish that carries observed runs is launch state, not news.
@@ -99,13 +100,21 @@ function createWindow(): void {
 ipcMain.handle('ready', () => allRuns());
 // The desktop app registers `claude://` and its dock menu builds
 // `code/continue?session=<local_…>` links from its own session ids, which are
-// the host ids the session files carry. An owned run has no desktop session,
-// so the best jump for it is its worktree.
+// the host ids the session files carry. An owned run Clearance holds has no
+// desktop session, so the jump for it is its worktree; handing it over is
+// `continue-in-claude`.
 const HOST_ID = /^local_[A-Za-z0-9-]{1,64}$/;
+const CLI_ID = /^[0-9a-f-]{36}$/;
 ipcMain.handle('open-in-claude', async (_e, id: string) => {
   const run = allRuns().find((r) => r.id === id);
   if (run?.hostSessionId && HOST_ID.test(run.hostSessionId)) {
     const url = `claude://code/continue?session=${run.hostSessionId}&source=clearance`;
+    await shell.openExternal(url);
+    return { kind: 'session', url };
+  }
+  // Handed over, but the desktop has not written its session file yet: ask again.
+  if (run?.heldBy === 'desktop' && CLI_ID.test(run.cliSessionId)) {
+    const url = `claude://resume?session=${run.cliSessionId}`;
     await shell.openExternal(url);
     return { kind: 'session', url };
   }
@@ -115,6 +124,15 @@ ipcMain.handle('open-in-claude', async (_e, id: string) => {
   }
   execFile('open', ['-a', 'Claude'], () => undefined);
   return { kind: 'app' };
+});
+// `claude://resume?session=<cli id>` makes the desktop import a CLI session,
+// or reopen (and unarchive) one it already knows.
+ipcMain.handle('continue-in-claude', async (_e, id: string) => {
+  const res = await owned.handToDesktop(id);
+  if (!res.ok) return res;
+  if (!CLI_ID.test(new URL(res.url).searchParams.get('session') || '')) return { ok: false, error: 'The run has no session id to hand over.' };
+  await shell.openExternal(res.url);
+  return res;
 });
 ipcMain.handle('answer', (_e, id: string, text: string, answers?: Record<string, string>) => owned.answer(id, text, answers));
 ipcMain.handle('permission', (_e, id: string, requestId: string, allow: boolean) => owned.decidePermission(id, requestId, allow));
@@ -127,7 +145,10 @@ app.whenReady().then(async () => {
   // Jump back from anywhere, Claude Code included.
   globalShortcut.register('Control+Option+C', showWindow);
   ensureTray(showWindow, () => { showWindow(); win?.webContents.send('notice', { kind: 'new-run' }); }, () => app.quit());
-  observed.on('runs', publish);
+  observed.on('runs', () => {
+    owned.sync(observed.desktopSessions());
+    observed.track(owned.desktopHeld());
+  });
   observed.on('error', (err) => console.error('[observed]', err));
   owned.on('runs', publish);
   owned.on('error', (err) => console.error('[owned]', err));
