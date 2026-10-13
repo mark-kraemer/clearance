@@ -10,6 +10,7 @@ const node = { platform: 'node', format: 'cjs', target: 'node22', bundle: true, 
 await Promise.all([
   build({ ...node, entryPoints: ['app/main/main.ts'], outfile: 'dist/main.cjs', external: ['electron'] }),
   build({ ...node, entryPoints: ['app/main/preload.ts'], outfile: 'dist/preload.cjs', external: ['electron'] }),
+  build({ ...node, format: 'esm', entryPoints: ['app/main/permission-server.ts'], outfile: 'dist/permission-server.mjs', banner: { js: "import { createRequire } from 'node:module'; const require = createRequire(import.meta.url);" } }),
   build({ platform: 'browser', format: 'iife', target: 'es2022', bundle: true, sourcemap: true, logLevel: 'info', entryPoints: ['app/renderer/renderer.ts'], outfile: 'dist/renderer.js' }),
 ]);
 

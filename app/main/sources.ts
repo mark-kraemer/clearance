@@ -37,6 +37,10 @@ export class ObservedSources extends EventEmitter {
   private pendingRefresh = false;
   runs: Run[] = [];
 
+  storeEntry(cliSessionId: string): StoreEntry | null {
+    return this.store.get(cliSessionId) ?? null;
+  }
+
   async start(): Promise<void> {
     const watch = (path: string, opts: Record<string, unknown> = {}) => {
       if (!existsSync(path)) return;

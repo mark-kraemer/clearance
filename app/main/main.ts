@@ -5,12 +5,15 @@ import { BrowserWindow, Notification, app, ipcMain, nativeTheme, shell } from 'e
 import { groupRuns } from '../core/order';
 import type { Run } from '../core/types';
 import { OwnedRuns, type StartRunInput } from './owned';
+import { ensureTray, updateTray } from './tray';
 import { listRepos } from './repos';
 import { ObservedSources } from './sources';
 
 let win: BrowserWindow | null = null;
 const observed = new ObservedSources();
-const owned = new OwnedRuns();
+const owned = new OwnedRuns(join(__dirname, 'permission-server.mjs'));
+owned.useStore((id) => observed.storeEntry(id));
+owned.on('log', (line: string) => { if (process.env.CLEARANCE_DEBUG) console.log(line); });
 const seenGates = new Map<string, number>();
 
 function allRuns(): Run[] {
@@ -25,6 +28,7 @@ function publish(): void {
   win?.webContents.send('runs', runs);
   const needs = groupRuns(runs, Date.now()).needs.length;
   if (app.dock) app.dock.setBadge(needs ? String(needs) : '');
+  updateTray(runs, showWindow, () => { showWindow(); win?.webContents.send('notice', { kind: 'new-run' }); }, () => app.quit());
   for (const r of runs) {
     if (r.gate && seenGates.get(r.id) !== r.gate.since) {
       seenGates.set(r.id, r.gate.since);
@@ -45,6 +49,12 @@ function notifyGate(r: Run): void {
     win?.webContents.send('notice', { kind: 'focus-run', id: r.id });
   });
   n.show();
+}
+
+function showWindow(): void {
+  if (!win) createWindow();
+  win?.show();
+  win?.focus();
 }
 
 function createWindow(): void {
@@ -100,6 +110,7 @@ ipcMain.handle('list-repos', () => listRepos());
 
 app.whenReady().then(async () => {
   createWindow();
+  ensureTray(showWindow, () => { showWindow(); win?.webContents.send('notice', { kind: 'new-run' }); }, () => app.quit());
   observed.on('runs', publish);
   observed.on('error', (err) => console.error('[observed]', err));
   owned.on('runs', publish);
@@ -107,6 +118,18 @@ app.whenReady().then(async () => {
   await owned.start();
   await observed.start();
   publish();
+  // Dev only: start an owned run on launch so the whole path can be exercised headlessly.
+  if (process.env.CLEARANCE_SMOKE_START) {
+    const res = await owned.begin(JSON.parse(process.env.CLEARANCE_SMOKE_START) as StartRunInput);
+    console.log('[smoke] begin ->', JSON.stringify(res));
+  }
+  if (process.env.CLEARANCE_SMOKE_ANSWER) {
+    const { id, text, after } = JSON.parse(process.env.CLEARANCE_SMOKE_ANSWER) as { id: string; text: string; after?: number };
+    setTimeout(async () => {
+      win?.webContents.send('notice', { kind: 'focus-run', id });
+      console.log('[smoke] answer ->', JSON.stringify(await owned.answer(id, text)));
+    }, after || 3000);
+  }
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) createWindow();
   });

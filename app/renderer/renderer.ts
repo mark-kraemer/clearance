@@ -266,7 +266,7 @@ function activityPanel(r: Run): string {
   return `<section class="panel" aria-label="Activity">
     <div class="p-head">${working ? icon('work', 'work pulse') : icon('pending', 'work')}<strong>${working ? 'Working' : 'Idle'}</strong><span class="muted">${esc(r.statusLabel)}</span><span class="since">${icon('clock')}${working ? `${fmtDur(Date.now() - r.started)} in` : `${fmtDur(Date.now() - r.lastActivity)} ago`}</span></div>
     <div class="p-body"><ul class="activity">${items}</ul></div>
-    <div class="p-foot"><span>${working ? 'No gate open. The next stop is the next gate.' : 'The last turn ended without a question. Nothing is waiting on you.'}</span>${r.source === 'owned' ? `<button class="btn" data-nudge>Send a message</button>` : `<button class="btn" data-open>${icon('open')}Open in Claude Code</button>`}</div>
+    ${r.source === 'owned' ? `<div class="composer"><form class="field" id="answer-form"><label class="vh" for="answer">Message</label><textarea id="answer" rows="1" placeholder="${working ? 'Queue a message for the run' : 'Send a message to continue the run'}">${esc((drafts[r.id] || { text: '' }).text)}</textarea><button class="btn primary" type="submit" id="send">${icon('send')}Send <kbd>⌘↩</kbd></button></form><div class="hint">${working ? 'No gate open. Sending now interrupts between gates.' : 'The last turn ended without a question.'}</div><div class="err-line" id="answer-err" hidden></div></div>` : `<div class="p-foot"><span>${working ? 'No gate open. The next stop is the next gate.' : 'The last turn ended without a question. Nothing is waiting on you.'}</span><button class="btn" data-open>${icon('open')}Open in Claude Code</button></div>`}
   </section>`;
 }
 
@@ -358,12 +358,12 @@ $('detail').addEventListener('submit', async (e) => {
   if ((e.target as HTMLElement).id !== 'answer-form') return;
   e.preventDefault();
   const r = byId(selectedId);
-  if (!r || !r.gate) return;
+  if (!r) return;
   const d = drafts[r.id] || { text: '', answers: {} };
   const text = (document.querySelector<HTMLTextAreaElement>('#answer')?.value || '').trim();
-  const unanswered = (r.gate.questions || []).filter((q) => !d.answers[q.question]);
+  const unanswered = (r.gate?.questions || []).filter((q) => !d.answers[q.question]);
   if (!text && unanswered.length) { const err = $('answer-err'); err.textContent = `Pick an answer for: ${unanswered.map((q) => q.header || q.question).join(', ')}, or write one.`; err.hidden = false; return; }
-  if (!text && !r.gate.questions?.length) { document.querySelector<HTMLTextAreaElement>('#answer')?.focus(); return; }
+  if (!text && !r.gate?.questions?.length) { document.querySelector<HTMLTextAreaElement>('#answer')?.focus(); return; }
   const res = await api.answer(r.id, text, d.answers);
   if (!res.ok) { const err = $('answer-err'); err.textContent = res.error || 'Could not send'; err.hidden = false; return; }
   delete drafts[r.id];
@@ -536,6 +536,9 @@ function applyRuns(next: Run[]): void {
   }
 }
 api.onRuns(applyRuns);
-api.onNotice((n) => { if (n.kind === 'focus-run' && n.id) select(n.id, { focusComposer: byId(n.id)?.source === 'owned', focusList: byId(n.id)?.source !== 'owned' }); });
+api.onNotice((n) => {
+  if (n.kind === 'focus-run' && n.id) select(n.id, { focusComposer: byId(n.id)?.source === 'owned', focusList: byId(n.id)?.source !== 'owned' });
+  if (n.kind === 'new-run') void openSheet();
+});
 void api.ready().then(applyRuns);
 setInterval(render, 30000);
