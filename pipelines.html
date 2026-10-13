@@ -1,0 +1,1219 @@
+<!--
+THESIS: A control room for concurrent Claude Code pipeline runs where the run waiting on a human is always the headline and its gate is answered where it is read. It refuses the dashboard-of-cards and the chat transcript as the way to find out what needs you.
+OWN-WORLD: The macOS productivity canon played straight at the craft level of Linear, Raycast and Apple Mail: a unified title bar, a two-pane split view, system type, cool neutral surfaces, system-blue selection, and three semantic states (needs you amber, working blue, done green) drawn as 16px status glyphs.
+STORY: The user returns after an hour, sees four runs need them ordered by how long they have waited, reads one gate, answers in a line, and moves on with a keystroke.
+FIRST VIEWPORT: Left, the run list grouped Needs you / Working / Done with status glyph, issue key, title, stage, and elapsed wait. Right, the selected run: stage rail with notes, the open gate's full content, quick replies, and the answer field. Primary action: Send (Cmd+Return).
+FORM: Category standard, chosen by the user over the roll (seed key 389f75b7, assigned grounded direction 7 declined).
+FINISH: unreviewed and undocumented is unfinished; this build ends with the finish review, the verdict, and DESIGN.md
+-->
+<title>Pipelines</title>
+<style>
+/* Layout: a floating macOS window. Unified title bar, run list left, selected run right, status bar below. */
+:root {
+  --win: #ededf0;
+  --list: #f5f5f7;
+  --pane: #ffffff;
+  --line: #d9d9de;
+  --line-soft: #e8e8ec;
+  --fg: #1c1c1f;
+  --fg-2: #68686f;
+  --fg-3: #9b9ba2;
+  --accent: #0a6bf2;
+  --accent-fg: #ffffff;
+  --accent-bg: #e9f1fe;
+  --sel: #e3e3e8;
+  --attn: #d8640b;
+  --attn-bg: #fff1e4;
+  --attn-fg: #964300;
+  --work: #2e6ddb;
+  --work-bg: #e8effd;
+  --ok: #1f8c4d;
+  --ok-bg: #e5f4ea;
+  --skip: #9b9ba2;
+  --field: #ffffff;
+  --kbd: #f0f0f3;
+  --desk: #c9ced8;
+  --shadow: 0 1px 2px rgba(20, 22, 30, .08), 0 18px 48px -18px rgba(20, 22, 30, .35);
+  --font: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", Helvetica, Arial, sans-serif;
+  --mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  --r: 6px;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --win: #2b2b2f; --list: #232327; --pane: #1b1b1f; --line: #3a3a41; --line-soft: #2c2c32;
+    --fg: #ececef; --fg-2: #a1a1a9; --fg-3: #707079;
+    --accent: #3d86f7; --accent-fg: #ffffff; --accent-bg: #18284a; --sel: #34343a;
+    --attn: #ff8f3d; --attn-bg: #3a2512; --attn-fg: #ffb57a;
+    --work: #5e9dff; --work-bg: #16243e;
+    --ok: #46c27c; --ok-bg: #15301f; --skip: #707079;
+    --field: #27272c; --kbd: #333339; --desk: #141417;
+    --shadow: 0 1px 2px rgba(0, 0, 0, .4), 0 18px 48px -18px rgba(0, 0, 0, .7);
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --win: #2b2b2f; --list: #232327; --pane: #1b1b1f; --line: #3a3a41; --line-soft: #2c2c32;
+  --fg: #ececef; --fg-2: #a1a1a9; --fg-3: #707079;
+  --accent: #3d86f7; --accent-fg: #ffffff; --accent-bg: #18284a; --sel: #34343a;
+  --attn: #ff8f3d; --attn-bg: #3a2512; --attn-fg: #ffb57a;
+  --work: #5e9dff; --work-bg: #16243e;
+  --ok: #46c27c; --ok-bg: #15301f; --skip: #707079;
+  --field: #27272c; --kbd: #333339; --desk: #141417;
+  --shadow: 0 1px 2px rgba(0, 0, 0, .4), 0 18px 48px -18px rgba(0, 0, 0, .7);
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+html, body { height: 100%; }
+body {
+  margin: 0; background: var(--desk); color: var(--fg);
+  font-family: var(--font); font-size: 13px; line-height: 1.45;
+  -webkit-font-smoothing: antialiased; padding-inline: 24px; padding-block: 24px;
+}
+button, input, textarea { font: inherit; color: inherit; }
+button { cursor: pointer; }
+a { color: var(--accent); text-decoration: none; }
+a:hover { text-decoration: underline; }
+code { font-family: var(--mono); font-size: 12px; }
+kbd {
+  font-family: var(--font); font-size: 11px; color: var(--fg-2);
+  background: var(--kbd); border: 1px solid var(--line); border-radius: 4px; padding: 0 5px; line-height: 16px;
+}
+.vh { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+button:focus { outline: none; }
+button:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+
+/* Window */
+.app {
+  height: 100%; max-width: 1360px; margin: 0 auto; display: flex; flex-direction: column;
+  background: var(--pane); border: 1px solid var(--line); border-radius: 11px; box-shadow: var(--shadow);
+  overflow: hidden; position: relative;
+}
+.titlebar {
+  flex: none; height: 52px; display: grid; grid-template-columns: 1fr auto 1fr; align-items: center;
+  padding-inline: 14px; background: var(--win); border-bottom: 1px solid var(--line); gap: 12px;
+}
+.lights { display: flex; gap: 8px; }
+.lights span { width: 12px; height: 12px; border-radius: 50%; background: #ff5f57; box-shadow: inset 0 0 0 .5px rgba(0,0,0,.15); }
+.lights span:nth-child(2) { background: #febc2e; }
+.lights span:nth-child(3) { background: #28c840; }
+.wtitle { text-align: center; line-height: 1.2; }
+.wtitle strong { font-weight: 600; font-size: 13px; display: block; }
+.wtitle .sub { font-size: 11px; color: var(--fg-2); }
+.toolbar { display: flex; justify-content: flex-end; gap: 8px; align-items: center; }
+.search {
+  display: inline-flex; align-items: center; gap: 8px; height: 28px; padding: 0 8px 0 9px; min-width: 200px;
+  background: var(--field); border: 1px solid var(--line); border-radius: 7px; color: var(--fg-3); text-align: left;
+}
+.search span { flex: 1; }
+.search:hover { border-color: var(--fg-3); }
+.icon-btn {
+  width: 28px; height: 28px; display: inline-grid; place-items: center; border: 1px solid transparent; border-radius: 7px;
+  background: none; color: var(--fg-2);
+}
+.icon-btn:hover { background: var(--sel); color: var(--fg); }
+.ico { width: 16px; height: 16px; flex: none; }
+
+/* Split */
+.split { flex: 1; min-height: 0; display: grid; grid-template-columns: 320px minmax(0, 1fr); }
+.list { background: var(--list); border-right: 1px solid var(--line); overflow-y: auto; padding-block: 6px 14px; }
+.detail { overflow-y: auto; background: var(--pane); }
+
+/* Groups and rows */
+.group-h {
+  position: sticky; top: 0; z-index: 1; background: var(--list);
+  padding: 10px 14px 4px; font-size: 11px; font-weight: 600; letter-spacing: .04em; text-transform: uppercase; color: var(--fg-2);
+  display: flex; justify-content: space-between; align-items: baseline;
+}
+.group-h .n { font-weight: 500; color: var(--fg-3); font-variant-numeric: tabular-nums; }
+.group-h.attn { color: var(--attn); }
+.group-h.attn .n { color: var(--attn); }
+.group-empty { padding: 4px 14px 8px; color: var(--fg-3); font-size: 12px; }
+.row {
+  width: calc(100% - 12px); margin: 0 6px 1px; display: grid; grid-template-columns: 16px minmax(0, 1fr) auto; column-gap: 10px;
+  align-items: start; text-align: left; padding: 7px 8px 8px; border: 0; border-radius: 7px; background: none;
+}
+.row:hover { background: var(--sel); }
+.row[aria-selected="true"] { background: var(--sel); }
+.list:focus-within .row[aria-selected="true"] { background: var(--accent); color: var(--accent-fg); }
+.list:focus-within .row[aria-selected="true"] .muted,
+.list:focus-within .row[aria-selected="true"] .key,
+.list:focus-within .row[aria-selected="true"] .wait { color: rgba(255,255,255,.82); }
+.list:focus-within .row[aria-selected="true"] .glyph { color: #fff; }
+.row .glyph { margin-top: 2px; }
+.row .t { display: flex; align-items: baseline; gap: 6px; min-width: 0; }
+.row .key { font-family: var(--mono); font-size: 11px; color: var(--fg-2); flex: none; }
+.row .name { font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+.row .muted { display: block; font-size: 12px; color: var(--fg-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.row .wait { display: block; font-size: 12px; color: var(--fg-2); font-variant-numeric: tabular-nums; text-align: right; line-height: 19px; }
+.row.needs .wait { color: var(--attn); font-weight: 600; }
+.row .num { font-size: 11px; color: var(--fg-3); font-variant-numeric: tabular-nums; text-align: right; display: block; opacity: 0; transition: opacity .12s; }
+.list:hover .row .num, .list:focus-within .row .num, .app.meta .row .num { opacity: 1; }
+.glyph { color: var(--fg-3); }
+.glyph.attn { color: var(--attn); }
+.glyph.work { color: var(--work); }
+.glyph.ok { color: var(--ok); }
+.glyph.skip { color: var(--skip); }
+.glyph.pulse { animation: pulse 1.6s ease-in-out infinite; }
+@keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: .45; } }
+
+/* Detail */
+.d-wrap { padding: 20px 28px 36px; max-width: 880px; }
+.btn.d-back { display: none; margin: -6px 0 10px -6px; }
+.d-head { display: flex; flex-wrap: wrap; align-items: flex-start; gap: 12px 16px; margin-bottom: 18px; }
+.d-head .grow { flex: 1 1 320px; min-width: 0; }
+.d-head h1 { margin: 0; font-size: 19px; font-weight: 600; line-height: 1.25; text-wrap: balance; }
+.d-head .key { font-family: var(--mono); font-size: 12px; color: var(--fg-2); margin-bottom: 2px; display: inline-block; }
+.meta { display: flex; flex-wrap: wrap; gap: 6px 14px; margin-top: 8px; font-size: 12px; color: var(--fg-2); align-items: center; }
+.meta span { display: inline-flex; align-items: center; gap: 5px; }
+.meta .ico { width: 13px; height: 13px; }
+.badge { display: inline-flex; align-items: center; gap: 5px; height: 20px; padding: 0 7px; border-radius: 5px; font-size: 11px; font-weight: 600; letter-spacing: .02em; }
+.badge.kind { background: var(--sel); color: var(--fg-2); text-transform: capitalize; }
+.actions { display: flex; gap: 8px; flex: none; }
+.btn {
+  display: inline-flex; align-items: center; gap: 7px; height: 28px; padding: 0 10px; border-radius: 7px;
+  border: 1px solid var(--line); background: var(--pane); color: var(--fg); font-weight: 500; white-space: nowrap;
+}
+.btn:hover { background: var(--sel); }
+.btn:disabled { opacity: .5; cursor: default; }
+.btn.primary { background: var(--accent); border-color: var(--accent); color: var(--accent-fg); }
+.btn.primary:hover { filter: brightness(.95); }
+.btn kbd { margin-left: 2px; }
+.btn.primary kbd { background: rgba(255,255,255,.18); border-color: transparent; color: #fff; }
+
+/* Stage rail */
+.rail { display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; gap: 0; border-top: 1px solid var(--line-soft); border-bottom: 1px solid var(--line-soft); padding: 14px 0 12px; margin-bottom: 20px; }
+.stage { position: relative; padding: 0 10px 0 0; min-width: 0; }
+.stage + .stage { padding-left: 14px; }
+.stage + .stage::before { content: ""; position: absolute; left: 0; top: 7px; width: 1px; height: 100%; max-height: 42px; background: var(--line-soft); }
+.stage .s-top { display: flex; align-items: center; gap: 6px; font-weight: 500; font-size: 12.5px; }
+.stage .s-note { margin-top: 3px; font-size: 12px; color: var(--fg-2); line-height: 1.35; overflow-wrap: anywhere; }
+.stage.pending .s-top, .stage.skipped .s-top { color: var(--fg-3); }
+.stage.active .s-top { color: var(--fg); }
+.stage .s-note a { color: var(--fg-2); text-decoration: underline; text-decoration-color: var(--line); }
+
+/* Gate and activity panels */
+.panel { border: 1px solid var(--line); border-radius: 9px; overflow: clip; }
+.panel.attn { border-color: color-mix(in srgb, var(--attn) 45%, var(--line)); }
+.p-head { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; padding: 10px 14px; border-bottom: 1px solid var(--line-soft); background: var(--list); }
+.panel.attn .p-head { background: var(--attn-bg); border-bottom-color: color-mix(in srgb, var(--attn) 25%, transparent); }
+.gate-id { font-family: var(--mono); font-size: 11.5px; font-weight: 700; color: var(--attn-fg); background: color-mix(in srgb, var(--attn) 18%, transparent); padding: 1px 6px; border-radius: 4px; }
+.p-head strong { font-weight: 600; }
+.p-head .since { margin-left: auto; font-size: 12px; color: var(--attn-fg); font-variant-numeric: tabular-nums; display: inline-flex; align-items: center; gap: 5px; white-space: nowrap; }
+.panel:not(.attn) .p-head .since { color: var(--fg-2); }
+.p-body { padding: 14px 16px 16px; }
+.p-body > :first-child { margin-top: 0; }
+.p-body > :last-child { margin-bottom: 0; }
+.p-body p { margin: 0 0 10px; max-width: 68ch; }
+.p-body .lede { font-size: 13.5px; }
+.p-body .muted { color: var(--fg-2); font-size: 12.5px; }
+.questions { list-style: none; margin: 0 0 12px; padding: 0; display: flex; flex-direction: column; gap: 10px; }
+.questions li { display: grid; grid-template-columns: 20px minmax(0, 1fr); gap: 4px 10px; padding: 10px 12px; background: var(--list); border-radius: 7px; }
+.questions .l { font-family: var(--mono); font-weight: 700; color: var(--fg-2); font-size: 12px; padding-top: 1px; }
+.questions .q { font-weight: 500; }
+.questions .rec { grid-column: 2; color: var(--fg-2); font-size: 12.5px; }
+.questions .cost { grid-column: 2; font-size: 11px; color: var(--fg-3); }
+.questions .cost b { font-weight: 600; color: var(--attn-fg); }
+details.decided { margin: 0 0 4px; }
+details.decided summary { cursor: pointer; font-size: 12.5px; color: var(--fg-2); font-weight: 500; }
+details.decided ul { margin: 8px 0 0; padding-left: 18px; color: var(--fg-2); font-size: 12.5px; display: flex; flex-direction: column; gap: 4px; }
+.triage { width: 100%; border-collapse: collapse; font-size: 12.5px; margin-bottom: 12px; }
+.triage th { text-align: left; font-weight: 600; font-size: 11px; letter-spacing: .03em; text-transform: uppercase; color: var(--fg-2); padding: 0 10px 8px 0; border-bottom: 1px solid var(--line-soft); }
+.triage td { vertical-align: top; padding: 9px 10px 9px 0; border-bottom: 1px solid var(--line-soft); }
+.triage tr:last-child td { border-bottom: 0; }
+.triage td.n { font-family: var(--mono); color: var(--fg-2); width: 24px; }
+.triage td.file { white-space: nowrap; }
+.triage td.file code { font-size: 11.5px; color: var(--fg-2); }
+.triage .verdict { font-weight: 600; white-space: nowrap; }
+.triage .verdict.fix { color: var(--ok); }
+.triage .verdict.ask { color: var(--attn); }
+.triage .verdict.skip { color: var(--fg-3); }
+.triage .why { display: block; font-weight: 400; color: var(--fg-2); font-size: 11.5px; white-space: normal; max-width: 22ch; }
+.tablewrap { overflow-x: auto; }
+blockquote { margin: 0 0 10px; padding: 10px 14px; color: var(--fg); background: var(--list); border: 1px solid var(--line-soft); border-radius: 7px; font-size: 13.5px; }
+.shot { border: 1px solid var(--line); border-radius: 7px; overflow: hidden; background: var(--list); margin-bottom: 12px; }
+.shot svg { display: block; width: 100%; height: auto; }
+.shot-cap { display: flex; justify-content: space-between; gap: 10px; padding: 6px 10px; font-size: 11.5px; color: var(--fg-2); border-top: 1px solid var(--line-soft); }
+.compromises { margin: 0 0 12px; padding-left: 20px; display: flex; flex-direction: column; gap: 6px; font-size: 13px; }
+.compromises li::marker { color: var(--fg-3); }
+
+/* Composer */
+.composer { position: sticky; bottom: 0; border-top: 1px solid var(--line-soft); padding: 12px 16px 14px; background: var(--pane); box-shadow: 0 -8px 16px -12px rgba(20, 22, 30, .18); }
+.quick { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px; }
+.chip { height: 26px; padding: 0 10px; border-radius: 13px; border: 1px solid var(--line); background: var(--pane); font-size: 12px; color: var(--fg); }
+.chip:hover { background: var(--sel); }
+.chip.on { border-color: var(--accent); background: var(--accent-bg); color: var(--accent); }
+.field { display: flex; gap: 8px; align-items: flex-end; }
+.field textarea {
+  flex: 1; min-height: 34px; max-height: 160px; resize: none; padding: 7px 10px; border-radius: 7px;
+  border: 1px solid var(--line); background: var(--field); line-height: 18px;
+}
+.field textarea::placeholder { color: var(--fg-3); }
+.field textarea:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 22%, transparent); }
+.hint { margin-top: 8px; font-size: 11.5px; color: var(--fg-3); }
+
+/* Activity */
+.activity { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; }
+.activity li { display: grid; grid-template-columns: 44px minmax(0, 1fr); gap: 12px; padding: 7px 0; border-bottom: 1px solid var(--line-soft); font-size: 12.5px; }
+.activity li:last-child { border-bottom: 0; }
+.activity .ts { font-family: var(--mono); font-size: 11px; color: var(--fg-3); padding-top: 2px; font-variant-numeric: tabular-nums; }
+.activity .live { color: var(--work); font-weight: 500; }
+.activity code { color: var(--fg-2); }
+.p-foot { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; justify-content: space-between; padding: 10px 16px 12px; border-top: 1px solid var(--line-soft); font-size: 12.5px; color: var(--fg-2); }
+
+/* History */
+.hist-h { margin: 24px 0 8px; font-size: 11px; font-weight: 600; letter-spacing: .04em; text-transform: uppercase; color: var(--fg-2); }
+.hist { list-style: none; margin: 0; padding: 0; }
+.hist li { display: grid; grid-template-columns: 16px minmax(0, 1fr); gap: 10px; padding: 6px 0; font-size: 12.5px; color: var(--fg-2); border-bottom: 1px solid var(--line-soft); }
+.hist li:last-child { border-bottom: 0; }
+.hist b { font-weight: 500; color: var(--fg); }
+
+/* Empty */
+.empty { padding: 60px 28px; text-align: center; color: var(--fg-2); max-width: 420px; margin: 0 auto; }
+.empty .ico { width: 28px; height: 28px; color: var(--fg-3); margin-bottom: 10px; }
+.empty h2 { margin: 0 0 6px; font-size: 15px; font-weight: 600; color: var(--fg); }
+.empty p { margin: 0; }
+
+/* Status bar */
+.statusbar { flex: none; height: 26px; display: flex; align-items: center; gap: 16px; padding-inline: 14px; font-size: 11.5px; color: var(--fg-2); background: var(--win); border-top: 1px solid var(--line); }
+.statusbar .right { margin-left: auto; display: inline-flex; align-items: center; gap: 6px; }
+.dot { width: 7px; height: 7px; border-radius: 50%; background: var(--ok); display: inline-block; }
+.statusbar .sep { color: var(--line); }
+
+/* Notifications */
+.notices { position: absolute; top: 60px; right: 14px; display: flex; flex-direction: column; gap: 8px; z-index: 20; width: min(340px, calc(100% - 28px)); pointer-events: none; }
+.notice {
+  pointer-events: auto; display: grid; grid-template-columns: 28px minmax(0, 1fr); gap: 10px; padding: 10px 12px 10px 10px;
+  background: var(--pane); border: 1px solid var(--line); border-radius: 12px; box-shadow: var(--shadow);
+  animation: slidein .28s cubic-bezier(.2, .8, .2, 1);
+}
+.notice .appicon { width: 28px; height: 28px; border-radius: 7px; background: var(--accent); display: grid; place-items: center; color: #fff; }
+.notice .appicon .ico { width: 15px; height: 15px; }
+.notice .nh { display: flex; justify-content: space-between; font-size: 11px; color: var(--fg-2); }
+.notice .nt { font-weight: 600; margin-top: 1px; }
+.notice .nb { font-size: 12.5px; color: var(--fg-2); margin-top: 1px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.notice .na { display: flex; gap: 6px; margin-top: 8px; }
+.notice .na .btn { height: 24px; font-size: 12px; padding: 0 8px; }
+@keyframes slidein { from { transform: translateX(24px); opacity: 0; } to { transform: none; opacity: 1; } }
+.toast { position: absolute; left: 50%; bottom: 40px; transform: translateX(-50%); background: var(--fg); color: var(--pane); padding: 7px 12px; border-radius: 8px; font-size: 12.5px; box-shadow: var(--shadow); z-index: 20; animation: slidein .2s ease-out; max-width: calc(100% - 32px); }
+
+/* Palette */
+.palette { position: absolute; inset: 0; z-index: 30; display: grid; place-items: start center; padding-top: 72px; background: rgba(20, 22, 30, .18); }
+.pal { width: min(560px, calc(100% - 32px)); background: var(--pane); border: 1px solid var(--line); border-radius: 12px; box-shadow: var(--shadow); overflow: hidden; }
+.pal input { width: 100%; border: 0; border-bottom: 1px solid var(--line-soft); background: none; padding: 14px 16px; font-size: 15px; outline: none; }
+.pal ul { list-style: none; margin: 0; padding: 6px; max-height: 360px; overflow-y: auto; }
+.pal li button { width: 100%; display: grid; grid-template-columns: 16px minmax(0, 1fr) auto; gap: 10px; align-items: center; text-align: left; padding: 8px 10px; border: 0; border-radius: 7px; background: none; }
+.pal li button:hover, .pal li button.hl { background: var(--sel); }
+.pal .ph { padding: 8px 10px 2px; font-size: 11px; font-weight: 600; letter-spacing: .04em; text-transform: uppercase; color: var(--fg-3); }
+.pal .key { font-family: var(--mono); font-size: 11px; color: var(--fg-2); }
+.pal .trail { font-size: 11.5px; color: var(--fg-3); }
+.pal .trail kbd { margin-left: 4px; }
+
+/* New run sheet */
+.sheet { position: absolute; inset: 0; z-index: 30; display: grid; place-items: start center; padding-top: 52px; background: rgba(20, 22, 30, .18); }
+.sheet-card { width: min(540px, calc(100% - 32px)); background: var(--pane); border: 1px solid var(--line); border-top: 0; border-radius: 0 0 12px 12px; box-shadow: var(--shadow); animation: sheetdown .22s cubic-bezier(.2, .8, .2, 1); }
+@keyframes sheetdown { from { transform: translateY(-14px); opacity: 0; } to { transform: none; opacity: 1; } }
+.sheet h2 { margin: 0; padding: 14px 18px 11px; font-size: 13px; font-weight: 600; border-bottom: 1px solid var(--line-soft); }
+.sheet form { padding: 16px 18px 16px; display: flex; flex-direction: column; gap: 12px; }
+.f { display: grid; grid-template-columns: 92px minmax(0, 1fr); gap: 6px 12px; align-items: center; }
+.f > label, .f > .lbl { font-size: 12.5px; color: var(--fg-2); text-align: right; }
+.f input[type="text"], .f select { width: 100%; height: 28px; padding: 0 9px; border: 1px solid var(--line); border-radius: 7px; background: var(--field); }
+.f input[type="text"]:focus, .f select:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 22%, transparent); }
+.f input[aria-invalid="true"] { border-color: var(--attn); }
+.seg { display: inline-flex; border: 1px solid var(--line); border-radius: 7px; padding: 2px; background: var(--list); justify-self: start; }
+.seg button { border: 0; background: none; padding: 3px 12px; border-radius: 5px; font-size: 12.5px; color: var(--fg-2); }
+.seg button[aria-pressed="true"] { background: var(--pane); color: var(--fg); box-shadow: 0 1px 2px rgba(20, 22, 30, .12); }
+.f .derived { font-family: var(--mono); font-size: 11.5px; color: var(--fg-2); overflow-wrap: anywhere; min-height: 16px; }
+.f .err { grid-column: 2; font-size: 11.5px; color: var(--attn-fg); }
+.f .note { grid-column: 2; font-size: 12px; color: var(--fg-3); }
+.sheet-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 2px; }
+.pick { position: relative; min-width: 0; }
+.picker { position: absolute; left: 0; right: 0; top: calc(100% + 4px); z-index: 2; margin: 0; padding: 4px; list-style: none; background: var(--pane); border: 1px solid var(--line); border-radius: 7px; box-shadow: var(--shadow); max-height: 232px; overflow-y: auto; }
+.picker li { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 8px; align-items: baseline; padding: 6px 8px; border-radius: 5px; font-size: 12.5px; cursor: default; }
+.picker li[aria-selected="true"], .picker li:hover { background: var(--sel); }
+.picker .key { font-family: var(--mono); font-size: 11px; color: var(--fg-2); }
+.picker .ttl { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.picker .meta { font-size: 11px; color: var(--fg-3); white-space: nowrap; }
+.picker .meta.warn { color: var(--attn-fg); }
+.picker .none { display: block; color: var(--fg-3); padding: 6px 8px; font-size: 12px; }
+.f .f-sub { grid-column: 2; font-size: 11.5px; color: var(--fg-2); }
+.f .f-sub:empty { display: none; }
+.f .cmd { font-family: var(--mono); font-size: 11.5px; color: var(--fg-2); background: var(--list); border: 1px solid var(--line-soft); border-radius: 7px; padding: 6px 9px; overflow-wrap: anywhere; line-height: 1.5; }
+.f .cmd b { font-weight: 500; color: var(--fg); }
+.check { display: inline-flex; align-items: center; gap: 7px; font-size: 12.5px; color: var(--fg); cursor: pointer; }
+.check input { accent-color: var(--accent); margin: 0; width: 14px; height: 14px; }
+
+@media (max-width: 760px) {
+  body { padding: 0; }
+  .app { border: 0; border-radius: 0; box-shadow: none; max-width: none; }
+  .titlebar { grid-template-columns: auto 1fr auto; height: 48px; padding-inline: 10px; }
+  .lights { display: none; }
+  .wtitle { text-align: left; }
+  .search { min-width: 0; width: 28px; padding: 0; justify-content: center; }
+  .search span, .search kbd { display: none; }
+  .split { grid-template-columns: minmax(0, 1fr); }
+  .list { border-right: 0; }
+  .app[data-view="detail"] .list { display: none; }
+  .app[data-view="list"] .detail { display: none; }
+  .btn.d-back { display: inline-flex; }
+  .d-wrap { padding: 12px 16px 28px; }
+  .rail { display: flex; flex-wrap: wrap; gap: 6px 14px; padding: 10px 0; margin-bottom: 14px; }
+  .stage { padding: 0; }
+  .stage + .stage { padding-left: 0; }
+  .stage + .stage::before { display: none; }
+  .stage .s-note { display: none; }
+  .stage:not(.active) .s-top span { display: none; }
+  .d-head .actions { width: 100%; }
+  .notices { top: 54px; }
+  .sheet { padding-top: 48px; }
+  .f { grid-template-columns: minmax(0, 1fr); }
+  .f > label, .f > .lbl { text-align: left; }
+  .f .err, .f .note, .f .f-sub { grid-column: 1; }
+  .statusbar .hide-sm { display: none; }
+  kbd, .row .num { display: none; }
+}
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation: none !important; transition: none !important; }
+}
+</style>
+
+<svg hidden xmlns="http://www.w3.org/2000/svg">
+  <symbol id="i-pending" viewBox="0 0 16 16"><circle cx="8" cy="8" r="6" fill="none" stroke="currentColor" stroke-width="1.5" stroke-dasharray="2.6 2.1" stroke-linecap="round"/></symbol>
+  <symbol id="i-active" viewBox="0 0 16 16"><circle cx="8" cy="8" r="6" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M8 3.5a4.5 4.5 0 0 1 0 9z" fill="currentColor"/></symbol>
+  <symbol id="i-done" viewBox="0 0 16 16"><circle cx="8" cy="8" r="6.75" fill="currentColor"/><path d="M5 8.2l2 2 4-4.2" fill="none" stroke="#fff" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+  <symbol id="i-skipped" viewBox="0 0 16 16"><circle cx="8" cy="8" r="6" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M5.5 8h5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></symbol>
+  <symbol id="i-attn" viewBox="0 0 16 16"><circle cx="8" cy="8" r="6.75" fill="currentColor"/><path d="M8 4.6v4" stroke="#fff" stroke-width="1.5" stroke-linecap="round"/><circle cx="8" cy="11.2" r=".95" fill="#fff"/></symbol>
+  <symbol id="i-work" viewBox="0 0 16 16"><circle cx="8" cy="8" r="6" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M8 4.5V8l2.3 1.6" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+  <symbol id="i-search" viewBox="0 0 16 16"><circle cx="7" cy="7" r="4.5" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M10.5 10.5L14 14" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></symbol>
+  <symbol id="i-open" viewBox="0 0 16 16"><path d="M6.5 3.5H4a1 1 0 0 0-1 1V12a1 1 0 0 0 1 1h7.5a1 1 0 0 0 1-1V9.5M9.5 3h3.5v3.5M13 3L7.5 8.5" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+  <symbol id="i-branch" viewBox="0 0 16 16"><circle cx="4.5" cy="3.5" r="1.6" fill="none" stroke="currentColor" stroke-width="1.5"/><circle cx="4.5" cy="12.5" r="1.6" fill="none" stroke="currentColor" stroke-width="1.5"/><circle cx="11.5" cy="5.5" r="1.6" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M4.5 5.1v5.8M11.5 7.1c0 2.4-2.4 3-5.3 3.4" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></symbol>
+  <symbol id="i-pr" viewBox="0 0 16 16"><circle cx="4" cy="3.5" r="1.6" fill="none" stroke="currentColor" stroke-width="1.5"/><circle cx="4" cy="12.5" r="1.6" fill="none" stroke="currentColor" stroke-width="1.5"/><circle cx="12" cy="12.5" r="1.6" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M4 5.1v5.8M12 10.9V7a2 2 0 0 0-2-2H8.5M10 3l-1.8 2L10 7" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+  <symbol id="i-clock" viewBox="0 0 16 16"><circle cx="8" cy="8" r="5.5" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M8 5v3.2l2 1.3" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></symbol>
+  <symbol id="i-send" viewBox="0 0 16 16"><path d="M8 13V3.5M4.5 7L8 3.5 11.5 7" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+  <symbol id="i-sun" viewBox="0 0 16 16"><circle cx="8" cy="8" r="3" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M8 1.5v1.8M8 12.7v1.8M1.5 8h1.8M12.7 8h1.8M3.4 3.4l1.3 1.3M11.3 11.3l1.3 1.3M3.4 12.6l1.3-1.3M11.3 4.7l1.3-1.3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></symbol>
+  <symbol id="i-moon" viewBox="0 0 16 16"><path d="M13 9.5A5.5 5.5 0 0 1 6.5 3a5.5 5.5 0 1 0 6.5 6.5z" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></symbol>
+  <symbol id="i-back" viewBox="0 0 16 16"><path d="M10 3.5L5.5 8l4.5 4.5" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+  <symbol id="i-terminal" viewBox="0 0 16 16"><rect x="2" y="3" width="12" height="10" rx="1.5" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M5 6.5l2 1.5-2 1.5M8.5 9.5h3" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+  <symbol id="i-bell" viewBox="0 0 16 16"><path d="M4 11V7.5a4 4 0 0 1 8 0V11l1 1.2H3z" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/><path d="M6.5 14h3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></symbol>
+  <symbol id="i-plus" viewBox="0 0 16 16"><path d="M8 3.5v9M3.5 8h9" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></symbol>
+  <symbol id="i-inbox" viewBox="0 0 16 16"><path d="M2.5 9h3l1 1.8h3L10.5 9h3M2.5 9l1.6-5h7.8l1.6 5v3.5a1 1 0 0 1-1 1h-9a1 1 0 0 1-1-1z" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></symbol>
+</svg>
+
+<div class="app" id="app" data-view="list">
+  <header class="titlebar">
+    <div class="lights" aria-hidden="true"><span></span><span></span><span></span></div>
+    <div class="wtitle"><strong>Pipelines</strong><span class="sub" id="title-sub"></span></div>
+    <div class="toolbar">
+      <button class="search" id="btn-palette" aria-label="Search runs and commands"><svg class="ico" aria-hidden="true"><use href="#i-search"/></svg><span>Search runs</span><kbd>⌘K</kbd></button>
+      <button class="icon-btn" id="btn-new" aria-label="New run"><svg class="ico" aria-hidden="true"><use href="#i-plus"/></svg></button>
+      <button class="icon-btn" id="btn-theme" aria-label="Toggle appearance"><svg class="ico" aria-hidden="true"><use href="#i-moon"/></svg></button>
+    </div>
+  </header>
+  <div class="split">
+    <nav class="list" id="list" aria-label="Runs"></nav>
+    <main class="detail" id="detail" aria-live="polite"></main>
+  </div>
+  <footer class="statusbar">
+    <span id="status-left"></span>
+    <span class="hide-sm" id="status-mid"></span>
+    <span class="right">Prototype · <span id="sess"></span> sample runs</span>
+  </footer>
+  <div class="notices" id="notices" aria-live="polite"></div>
+  <div class="sheet" id="sheet" hidden>
+    <div class="sheet-card" role="dialog" aria-labelledby="sheet-title">
+      <h2 id="sheet-title">New run</h2>
+      <form id="newrun-form" novalidate>
+        <div class="f"><label for="nr-task">Task</label>
+          <div class="pick">
+            <input id="nr-task" type="text" placeholder="Linear issue, or a short title" autocomplete="off" spellcheck="false" role="combobox" aria-expanded="false" aria-controls="nr-list" aria-autocomplete="list">
+            <ul class="picker" id="nr-list" role="listbox" aria-label="Matching Linear issues" hidden></ul>
+          </div>
+          <span class="f-sub" id="nr-issue"></span>
+          <span class="err" id="nr-err" hidden></span>
+        </div>
+        <div class="f"><span class="lbl" id="nr-kind-label">Kind</span><div class="seg" role="group" aria-labelledby="nr-kind-label"><button type="button" data-kind="feature" aria-pressed="true">Feature</button><button type="button" data-kind="bug" aria-pressed="false">Bug</button></div></div>
+        <div class="f"><label for="nr-repo">Repository</label><select id="nr-repo"><option>RoleModel/almanac</option><option>RoleModel/claude-plugins</option><option>RoleModel/tassel</option></select></div>
+        <div class="f"><span class="lbl">Worktree</span><span class="derived" id="nr-branch"></span></div>
+        <div class="f"><span class="lbl">Runs</span><code class="cmd" id="nr-cmd"></code></div>
+        <div class="f"><span class="lbl"></span><label class="check"><input type="checkbox" id="nr-open">Open in Claude Code when it starts</label></div>
+        <div class="f"><span class="note">Uses the <code>claude</code> you are signed into. Step 0 checks that the work does not already exist before anything starts.</span></div>
+        <div class="sheet-actions"><button type="button" class="btn" data-cancel>Cancel</button><button type="submit" class="btn primary" id="nr-start">Start run <kbd>⌘↩</kbd></button></div>
+      </form>
+    </div>
+  </div>
+  <div class="palette" id="palette" hidden>
+    <div class="pal" role="dialog" aria-label="Search runs and commands">
+      <input id="pal-input" type="text" placeholder="Jump to a run or run a command" autocomplete="off" aria-label="Search">
+      <ul id="pal-list"></ul>
+    </div>
+  </div>
+</div>
+
+<script>
+(function () {
+  'use strict';
+  const $ = (id) => document.getElementById(id);
+  const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+  const now = () => Date.now();
+  const minsAgo = (m) => now() - m * 60000;
+  const icon = (name, cls) => `<svg class="ico glyph ${cls || ''}" aria-hidden="true"><use href="#i-${name}"/></svg>`;
+  const STAGE_ICON = { pending: 'pending', active: 'active', done: 'done', skipped: 'skipped' };
+  const STAGE_CLS = { pending: '', active: 'work', done: 'ok', skipped: 'skip' };
+  const STAGES = {
+    feature: [['plan', 'Plan'], ['implement', 'Implement'], ['review', 'Review'], ['pr', 'File PR'], ['feedback', 'Feedback']],
+    bug: [['implement', 'Fix'], ['review', 'Review'], ['pr', 'File PR'], ['feedback', 'Feedback']],
+  };
+  const GATE_NAME = { G1: 'Scope', G2: 'Plan', G3: 'Visual', G4: 'Review triage', G5: 'Side effects' };
+
+  function stages(kind, status, notes) {
+    return STAGES[kind].map(([id, label]) => ({ id, label, status: status[id] || 'pending', note: (notes && notes[id]) || '' }));
+  }
+
+  /* All runs below are synthetic example data for the prototype. */
+  const SEED_RUNS = [
+    {
+      id: 'alm-503', key: 'ALM-503', title: 'Milestone budget rollover at close', kind: 'feature', branch: 'alm-503-budget-rollover',
+      started: minsAgo(74), stages: stages('feature', { plan: 'active' }),
+      gate: { id: 'G1', since: minsAgo(41), summary: 'One PR, 5 pts · three questions', kind: 'scope' },
+      history: [['Started', 'feature pipeline, worktree alm-503-budget-rollover']],
+    },
+    {
+      id: 'alm-480', key: 'ALM-480', title: 'Partner create/update tools', kind: 'feature', branch: 'alm-480-partner-tools',
+      started: minsAgo(190), stages: stages('feature', { plan: 'done', implement: 'done', review: 'active' }, { plan: 'One PR, 3 pts · G2: go', implement: '18 specs green · 4 commits' }),
+      gate: { id: 'G4', since: minsAgo(18), summary: '3 findings · 2 fix, 1 ask', kind: 'triage' },
+      history: [['Started', 'feature pipeline, worktree alm-480-partner-tools'], ['G1', 'one PR, 3 pts, two questions answered'], ['G2', 'go'], ['Implement', '18 specs green, 4 commits']],
+    },
+    {
+      id: 'alm-458', key: 'ALM-458', title: 'Partner pulse timeout retry', kind: 'bug', branch: 'alm-458-pulse-retry',
+      started: minsAgo(1440 + 130), stages: stages('bug', { implement: 'done', review: 'done', pr: 'done', feedback: 'active' }, { implement: 'Regression spec red → green', review: 'G4: clean', pr: 'github.com/RoleModel/almanac/pull/1271' }),
+      gate: { id: 'G5', since: minsAgo(9), summary: 'Reply to the reviewer in your name', kind: 'side' },
+      history: [['Started', 'bug pipeline'], ['Fix', 'regression spec red then green'], ['G4', 'clean'], ['File PR', 'almanac#1271'], ['Feedback', 'the reviewer left 1 comment on the timeout']],
+    },
+    {
+      id: 'alm-512', key: 'ALM-512', title: 'Booked hours double-count PTO', kind: 'bug', branch: 'alm-512-booked-pto',
+      started: minsAgo(52), stages: stages('bug', { implement: 'active' }, { implement: 'Regression spec red → green · 2 commits' }),
+      gate: { id: 'G3', since: minsAgo(6), summary: 'Screenshot on dev data · 2 compromises', kind: 'visual' },
+      history: [['Started', 'bug pipeline, worktree alm-512-booked-pto'], ['Fix', 'regression spec red then green, 2 commits']],
+    },
+    {
+      id: 'alm-497', key: 'ALM-497', title: 'Utilization report CSV export', kind: 'feature', branch: 'alm-497-utilization-csv',
+      started: minsAgo(96), stages: stages('feature', { plan: 'done', implement: 'active' }, { plan: 'One PR, 2 pts · G2: go' }),
+      gate: null, working: { label: 'tdd · running the suite', next: 'G3 if the diff touches UI, otherwise review' },
+      activity: [['16:04', 'tdd · <code>utilization_export_spec.rb</code> · 14 of 18 green', true], ['16:01', 'Edit <code>app/exports/utilization_csv.rb</code>'], ['15:58', 'Commit · Export utilization as CSV, one row per person per week'], ['15:52', 'tdd · red: 4 new specs failing as expected'], ['15:40', 'G2 · go']],
+      history: [['Started', 'feature pipeline, worktree alm-497-utilization-csv'], ['G1', 'one PR, 2 pts, no questions'], ['G2', 'go']],
+    },
+    {
+      id: 'cp-88', key: 'CP-88', title: 'Pipeline plugin README and marketplace entry', kind: 'feature', branch: 'pipeline-plugin',
+      started: minsAgo(230), stages: stages('feature', { plan: 'done', implement: 'done', review: 'active' }, { plan: 'One PR, 1 pt · G2: go', implement: 'Docs only · 2 commits' }),
+      gate: null, working: { label: 'ready-for-review · spec-review and code-review running', next: 'G4 review triage' },
+      activity: [['16:03', 'spec-review · 2 of 2 agents returned, verifying findings', true], ['15:57', 'ready-for-review · started'], ['15:55', 'Commit · List the pipeline plugin in the marketplace'], ['15:31', 'Commit · Document the pipeline plugin and its gates']],
+      history: [['Started', 'feature pipeline, worktree pipeline-plugin'], ['G1', 'one PR, 1 pt'], ['G2', 'go'], ['Implement', 'docs only, 2 commits']],
+    },
+    {
+      id: 'alm-471', key: 'ALM-471', title: 'Deliverable search ignores archived', kind: 'bug', branch: 'alm-471-archived-search',
+      started: minsAgo(1440 * 2), stages: stages('bug', { implement: 'done', review: 'done', pr: 'done', feedback: 'skipped' }, { implement: 'Regression spec red → green', review: 'G4: clean', pr: 'github.com/RoleModel/almanac/pull/1266', feedback: 'Merged without comments' }),
+      gate: null, done: { label: 'Merged', when: minsAgo(140) },
+      history: [['Started', 'bug pipeline'], ['Fix', 'regression spec red then green'], ['G4', 'clean'], ['File PR', 'almanac#1266'], ['Feedback', 'skipped, merged without comments']],
+    },
+  ];
+
+  const clone = (v) => JSON.parse(JSON.stringify(v));
+  const runs = clone(SEED_RUNS);
+
+  /* Gate bodies and quick replies. */
+  const GATES = {
+    scope: {
+      quick: ['Keep all three recommendations', 'A: callback instead', 'B: roll on close, no confirm'],
+      body: () => `
+        <p class="lede">One PR, 5 points. Unspent milestone budget rolls into the next milestone when the milestone closes.</p>
+        <ol class="questions">
+          <li><span class="l">A</span><span class="q">Where does the rollover live?</span><span class="rec">Recommended: a <code>MilestoneCloser</code> service object called from the close action, not a callback on <code>Milestone</code>.</span><span class="cost"><b>Costly to reverse</b> · architecture</span></li>
+          <li><span class="l">B</span><span class="q">Does the PM confirm the rollover, or does it happen on close?</span><span class="rec">Recommended: confirm, one click on the milestone page, so an accidental close moves no money.</span><span class="cost"><b>Costly to reverse</b> · product rule</span></li>
+          <li><span class="l">C</span><span class="q">Rolled amount shown as its own line on the receiving milestone, or folded into its budget?</span><span class="rec">Recommended: its own line, so the original budget stays legible.</span><span class="cost"><b>Moderate</b> · shape of the UI</span></li>
+        </ol>
+        <details class="decided"><summary>Decided unless you object · 4</summary><ul>
+          <li>Money stays integer cents plus a display string, like every other amount.</li>
+          <li>The rollover is recorded as a <code>BudgetTransfer</code> row, so it can be reversed.</li>
+          <li>Only the last milestone in a project cannot roll over; the close action says so.</li>
+          <li>Specs sit at the service object and one request spec on the close action.</li>
+        </ul></details>`,
+    },
+    plan: {
+      quick: ['Implement', 'Defer the separate line'],
+      body: () => `
+        <p class="lede">What ships in this PR: a <code>MilestoneCloser</code> that moves unspent budget into the next milestone as a <code>BudgetTransfer</code>, a confirm step on the close action, and the rolled amount as its own line on the receiving milestone.</p>
+        <p><strong>Deferred:</strong> rolling across projects, and a report of all transfers. Both go to follow-up issues.</p>
+        <p><strong>Test seams:</strong> <code>MilestoneCloser#call</code> (unit), the close action (request spec), and the milestone page line (system spec).</p>
+        <p class="muted">Anything found later that is beyond this plan becomes a follow-up issue, not part of the PR.</p>
+        <p><strong>Implement?</strong></p>`,
+    },
+    visual: {
+      quick: ['Looks right, go', 'Blank the zeros', 'Wrap is fine'],
+      body: () => `
+        <div class="shot">
+          <svg viewBox="0 0 720 300" role="img" aria-label="Screenshot of the booked hours report on development data">
+            <rect width="720" height="300" fill="var(--pane)"/>
+            <rect width="720" height="36" fill="var(--list)"/><rect x="0" y="36" width="720" height="1" fill="var(--line)"/>
+            <text x="20" y="23" font-family="var(--font)" font-size="13" font-weight="600" fill="var(--fg)">Booked hours · week of Oct 6</text>
+            <text x="560" y="23" font-family="var(--font)" font-size="11" fill="var(--fg-2)">Almanac · development</text>
+            <g font-family="var(--font)" font-size="11" fill="var(--fg-2)"><text x="20" y="62">Person</text><text x="300" y="62">Booked</text><text x="400" y="62">PTO</text><text x="500" y="62">Available</text><text x="620" y="62">Total</text></g>
+            <rect x="20" y="70" width="680" height="1" fill="var(--line)"/>
+            <g font-family="var(--font)" font-size="12.5" fill="var(--fg)">
+              <text x="20" y="94">Priya Raman</text><text x="300" y="94">32.0</text><text x="400" y="94">8.0</text><text x="500" y="94">0.0</text><text x="620" y="94" font-weight="600">40.0</text>
+              <text x="20" y="124">Devon Okafor</text><text x="300" y="124">24.5</text><text x="400" y="124" fill="var(--fg-3)">0.0</text><text x="500" y="124">15.5</text><text x="620" y="124" font-weight="600">40.0</text>
+              <text x="20" y="154">Mei-Lin Castellanos-Whitfield</text><text x="300" y="154">36.0</text><text x="400" y="154">4.0</text><text x="500" y="154">0.0</text><text x="620" y="154" font-weight="600">40.0</text>
+              <text x="20" y="184">Tomas Lindqvist</text><text x="300" y="184">40.0</text><text x="400" y="184" fill="var(--fg-3)">0.0</text><text x="500" y="184">0.0</text><text x="620" y="184" font-weight="600">40.0</text>
+              <text x="20" y="214">Sasha Petrov</text><text x="300" y="214">16.0</text><text x="400" y="214">16.0</text><text x="500" y="214">8.0</text><text x="620" y="214" font-weight="600">40.0</text>
+            </g>
+            <g stroke="var(--line-soft)"><line x1="20" y1="104" x2="700" y2="104"/><line x1="20" y1="134" x2="700" y2="134"/><line x1="20" y1="164" x2="700" y2="164"/><line x1="20" y1="194" x2="700" y2="194"/></g>
+            <rect x="20" y="236" width="680" height="1" fill="var(--line)"/>
+            <g font-family="var(--font)" font-size="12.5" font-weight="600" fill="var(--fg)"><text x="20" y="262">Team</text><text x="300" y="262">148.5</text><text x="400" y="262">28.0</text><text x="500" y="262">23.5</text><text x="620" y="262">200.0</text></g>
+            <rect x="392" y="76" width="92" height="150" rx="4" fill="none" stroke="var(--attn)" stroke-width="1.5" stroke-dasharray="4 3"/>
+            <text x="392" y="290" font-family="var(--font)" font-size="11" fill="var(--attn-fg)">PTO no longer counted in Booked</text>
+          </svg>
+          <div class="shot-cap"><span>Shot on dev data at 1440 × 900 · synthetic example</span><span>booked_hours_report</span></div>
+        </div>
+        <p>Two compromises found while building. Each is a question.</p>
+        <ol class="compromises">
+          <li>The PTO column now shows <code>0.0</code> for people with no PTO. Blank, or keep the zero?</li>
+          <li>At 1280 px the Total column wraps to two lines on names longer than 24 characters.</li>
+        </ol>`,
+    },
+    triage: {
+      quick: ['Fix 1 and 2, ask 3 later', 'Fix all three', 'Fix 1, skip 2, ask 3'],
+      body: () => `
+        <p class="muted">spec-review: matches ALM-480. code-review: 3 findings, each verified against the code. Nothing is fixed until you answer.</p>
+        <div class="tablewrap"><table class="triage">
+          <thead><tr><th>#</th><th>Finding</th><th>File</th><th>Proposed</th></tr></thead>
+          <tbody>
+            <tr><td class="n">1</td><td><code>PartnerUpdateTool</code> accepts <code>company_uid</code> but never scopes the lookup to the agency, so a partner of another agency can be updated.</td><td class="file"><code>app/tools/partner_update_tool.rb:41</code></td><td><span class="verdict fix">fix</span></td></tr>
+            <tr><td class="n">2</td><td>The create spec stubs <code>Company.find_by!</code>, so the real not-found path is never exercised.</td><td class="file"><code>spec/tools/partner_create_tool_spec.rb:18</code></td><td><span class="verdict fix">fix</span></td></tr>
+            <tr><td class="n">3</td><td><code>PartnerCreateTool#call</code> returns the full partner record including <code>internal_notes</code>. The plan listed public fields only.</td><td class="file"><code>app/tools/partner_create_tool.rb:28</code></td><td><span class="verdict ask">ask<span class="why">changes behavior beyond the plan</span></span></td></tr>
+          </tbody>
+        </table></div>
+        <p class="muted">Your answer sets the fix list. The fixes then run to the PR without another stop.</p>`,
+    },
+    side: {
+      quick: ['Post it', 'Hold, I will reword'],
+      body: () => `
+        <p class="lede">Reply to the reviewer's comment on <a href="https://github.com/RoleModel/almanac/pull/1271" target="_blank" rel="noopener">almanac#1271</a>, posted in your name:</p>
+        <blockquote>Kept the 30 s timeout. The retry covers the slow path, and lowering it would cut off the EU partners' first pulse of the day.</blockquote>
+        <p class="muted">Visible to everyone on the PR. Posts under your GitHub account. After posting, the PR is re-read before this is reported done.</p>`,
+    },
+    visual2: {
+      quick: ['Looks right, go', 'Move the button to the toolbar'],
+      body: () => `
+        <div class="shot">
+          <svg viewBox="0 0 720 220" role="img" aria-label="Screenshot of the utilization report with the new CSV download">
+            <rect width="720" height="220" fill="var(--pane)"/>
+            <rect width="720" height="36" fill="var(--list)"/><rect x="0" y="36" width="720" height="1" fill="var(--line)"/>
+            <text x="20" y="23" font-family="var(--font)" font-size="13" font-weight="600" fill="var(--fg)">Utilization · Q4 to date</text>
+            <text x="560" y="23" font-family="var(--font)" font-size="11" fill="var(--fg-2)">Almanac · development</text>
+            <rect x="20" y="52" width="150" height="26" rx="6" fill="var(--pane)" stroke="var(--line)"/>
+            <text x="34" y="69" font-family="var(--font)" font-size="12" fill="var(--fg)">Weeks: last 13</text>
+            <rect x="590" y="52" width="110" height="26" rx="6" fill="var(--accent)"/>
+            <text x="608" y="69" font-family="var(--font)" font-size="12" font-weight="600" fill="#fff">Download CSV</text>
+            <g font-family="var(--font)" font-size="11" fill="var(--fg-2)"><text x="20" y="104">Person</text><text x="300" y="104">Billable</text><text x="400" y="104">Internal</text><text x="500" y="104">Utilization</text></g>
+            <rect x="20" y="112" width="680" height="1" fill="var(--line)"/>
+            <g font-family="var(--font)" font-size="12.5" fill="var(--fg)">
+              <text x="20" y="136">Priya Raman</text><text x="300" y="136">412.0</text><text x="400" y="136">88.0</text><text x="500" y="136">82%</text>
+              <text x="20" y="166">Devon Okafor</text><text x="300" y="166">356.5</text><text x="400" y="166">143.5</text><text x="500" y="166">71%</text>
+              <text x="20" y="196">Tomas Lindqvist</text><text x="300" y="196">470.0</text><text x="400" y="196">30.0</text><text x="500" y="196">94%</text>
+            </g>
+            <g stroke="var(--line-soft)"><line x1="20" y1="146" x2="700" y2="146"/><line x1="20" y1="176" x2="700" y2="176"/></g>
+            <rect x="584" y="46" width="122" height="38" rx="6" fill="none" stroke="var(--attn)" stroke-width="1.5" stroke-dasharray="4 3"/>
+          </svg>
+          <div class="shot-cap"><span>Shot on dev data at 1440 × 900 · synthetic example</span><span>utilization_report</span></div>
+        </div>
+        <p>Two compromises found while building. Each is a question.</p>
+        <ol class="compromises">
+          <li>The download button sits in the filter row because the report has no toolbar. Keep it there, or add a toolbar?</li>
+          <li>The CSV uses the week's Monday as the column label. Other exports use the week number.</li>
+        </ol>`,
+    },
+    scope2: {
+      quick: ['Keep both recommendations', 'A: callback instead', 'B: admins only'],
+      body: (r) => `
+        <p class="lede">One PR, 3 points. ${esc(r.title)}, built beside the nearest existing pattern in the repo.</p>
+        <ol class="questions">
+          <li><span class="l">A</span><span class="q">Where does the new behavior live?</span><span class="rec">Recommended: a service object next to the closest existing one, called from the controller, not a model callback.</span><span class="cost"><b>Costly to reverse</b> · architecture</span></li>
+          <li><span class="l">B</span><span class="q">Who can see the result?</span><span class="rec">Recommended: the same people who can see the parent record. No new permission.</span><span class="cost"><b>Costly to reverse</b> · product rule</span></li>
+        </ol>
+        <details class="decided"><summary>Decided unless you object · 3</summary><ul>
+          <li>Naming follows the neighboring files in the same folder.</li>
+          <li>Specs sit at the service object and one request spec.</li>
+          <li>Nothing is pushed until the PR stage.</li>
+        </ul></details>`,
+    },
+    plan2: {
+      quick: ['Implement', 'Defer the second question'],
+      body: (r) => `
+        <p class="lede">What ships in this PR: ${esc(r.title)}, as a service object beside the nearest existing pattern, visible to the same people as the parent record.</p>
+        <p><strong>Deferred:</strong> anything the issue did not ask for. It goes to a follow-up issue.</p>
+        <p><strong>Test seams:</strong> the service object (unit) and the request (request spec).</p>
+        <p><strong>Implement?</strong></p>`,
+    },
+    triage2: {
+      quick: ['Fix both', 'Fix 1, skip 2'],
+      body: () => `
+        <p class="muted">spec-review: matches the issue. code-review: 2 findings, each verified.</p>
+        <div class="tablewrap"><table class="triage">
+          <thead><tr><th>#</th><th>Finding</th><th>File</th><th>Proposed</th></tr></thead>
+          <tbody>
+            <tr><td class="n">1</td><td>The CSV header row is written even when the export has no rows; the report page shows an empty file as a download.</td><td class="file"><code>app/exports/utilization_csv.rb:12</code></td><td><span class="verdict fix">fix</span></td></tr>
+            <tr><td class="n">2</td><td>Week labels use the server time zone rather than America/New_York, which every other report uses.</td><td class="file"><code>app/exports/utilization_csv.rb:31</code></td><td><span class="verdict fix">fix</span></td></tr>
+          </tbody>
+        </table></div>`,
+    },
+  };
+
+  /* State */
+  let selectedId = null;
+  let composerDraft = {};
+  let listFocusIndex = 0;
+
+  const byId = (id) => runs.find((r) => r.id === id);
+  const group = (r) => (r.gate ? 'needs' : r.done ? 'done' : 'working');
+  function ordered() {
+    const needs = runs.filter((r) => group(r) === 'needs').sort((a, b) => a.gate.since - b.gate.since);
+    const working = runs.filter((r) => group(r) === 'working');
+    const done = runs.filter((r) => group(r) === 'done');
+    return { needs, working, done, flat: [...needs, ...working, ...done] };
+  }
+  function fmtDur(ms) {
+    const m = Math.max(0, Math.round(ms / 60000));
+    if (m < 1) return '<1m';
+    if (m < 60) return m + 'm';
+    const h = Math.floor(m / 60), d = Math.floor(h / 24);
+    if (d >= 1) return d + 'd ' + (h % 24) + 'h';
+    return h + 'h ' + (m % 60 ? (m % 60) + 'm' : '');
+  }
+  const activeStage = (r) => r.stages.find((s) => s.status === 'active') || r.stages[r.stages.length - 1];
+
+  /* Rendering */
+  function renderList() {
+    const o = ordered();
+    const sections = [
+      ['needs', 'Needs you', o.needs, 'No run is waiting on you.'],
+      ['working', 'Working', o.working, 'Nothing is running.'],
+      ['done', 'Done today', o.done, ''],
+    ];
+    let n = 0;
+    let html = '';
+    for (const [key, label, items, emptyText] of sections) {
+      if (key === 'done' && !items.length) continue;
+      html += `<div class="group-h ${key === 'needs' ? 'attn' : ''}"><span>${label}</span><span class="n">${items.length}</span></div>`;
+      if (!items.length) html += `<div class="group-empty">${emptyText}</div>`;
+      for (const r of items) {
+        n += 1;
+        const g = group(r);
+        const st = activeStage(r);
+        let glyph, sub, trail;
+        if (g === 'needs') {
+          glyph = icon('attn', 'attn');
+          sub = `${st.label} · ${r.gate.id} ${GATE_NAME[r.gate.id]}`;
+          trail = `<span class="wait">${fmtDur(now() - r.gate.since)}</span>`;
+        } else if (g === 'working') {
+          glyph = icon('work', 'work pulse');
+          sub = `${st.label} · ${esc(r.working.label)}`;
+          trail = `<span class="wait">${fmtDur(now() - r.started)} in</span>`;
+        } else {
+          glyph = icon('done', 'ok');
+          sub = `${r.done.label} · ${esc(r.stages.find((s) => s.id === 'pr').note.replace('github.com/RoleModel/', ''))}`;
+          trail = `<span class="wait">${fmtDur(now() - r.done.when)} ago</span>`;
+        }
+        html += `<button class="row ${g}" role="option" data-id="${r.id}" aria-selected="${r.id === selectedId}" tabindex="${r.id === selectedId ? 0 : -1}">
+          ${glyph}
+          <span><span class="t"><span class="key">${r.key}</span><span class="name">${esc(r.title)}</span></span><span class="muted">${sub}</span></span>
+          <span>${trail}${n <= 9 ? `<span class="num">⌘${n}</span>` : ''}</span>
+        </button>`;
+      }
+    }
+    $('list').innerHTML = html;
+    const needsN = o.needs.length, workN = o.working.length;
+    $('title-sub').textContent = needsN ? `${needsN} need${needsN === 1 ? 's' : ''} you · ${workN} working` : `${workN} working · nothing needs you`;
+    document.title = needsN ? `Pipelines (${needsN})` : 'Pipelines';
+    $('status-left').textContent = `${runs.length} runs`;
+    $('sess').textContent = runs.length;
+    $('status-mid').textContent = `${needsN} need you · ${workN} working · ${o.done.length} done today`;
+  }
+
+  function renderDetail() {
+    const r = byId(selectedId);
+    const el = $('detail');
+    if (!r) {
+      el.innerHTML = runs.length
+        ? `<div class="empty">${icon('inbox')}<h2>No run selected</h2><p>Pick a run on the left, or press ⌘1 to ⌘9.</p></div>`
+        : `<div class="empty">${icon('inbox')}<h2>No runs on the board</h2><p>Press ⌘N to start one here, or start a pipeline in Claude Code and it appears on the board. ⌘K then “Reset sample runs” brings the examples back.</p></div>`;
+      return;
+    }
+    const g = group(r);
+    const rail = r.stages.map((s) => `<div class="stage ${s.status}"><div class="s-top">${icon(STAGE_ICON[s.status], STAGE_CLS[s.status])}<span>${s.label}</span></div>${s.note ? `<div class="s-note">${s.note.startsWith('github.com') ? `<a href="https://${s.note}" target="_blank" rel="noopener">${s.note.replace('github.com/RoleModel/', '')}</a>` : esc(s.note)}</div>` : ''}</div>`).join('');
+    let panel = '';
+    if (g === 'needs') {
+      const spec = GATES[r.gate.kind];
+      const draft = composerDraft[r.id] || '';
+      panel = `<section class="panel attn" aria-label="Open gate">
+        <div class="p-head"><span class="gate-id">${r.gate.id}</span><strong>${GATE_NAME[r.gate.id]}</strong><span class="since">${icon('clock')}waiting ${fmtDur(now() - r.gate.since)}</span></div>
+        <div class="p-body">${spec.body(r)}</div>
+        <div class="composer">
+          <div class="quick" role="group" aria-label="Quick replies">${spec.quick.map((q) => `<button class="chip ${draft === q ? 'on' : ''}" data-quick="${esc(q)}">${esc(q)}</button>`).join('')}</div>
+          <form class="field" id="answer-form">
+            <label class="vh" for="answer">Your answer</label>
+            <textarea id="answer" rows="1" placeholder="One line: go, or fix 1 and 3">${esc(draft)}</textarea>
+            <button class="btn primary" type="submit" id="send">${icon('send')}Send <kbd>⌘↩</kbd></button>
+          </form>
+          <div class="hint">Sent to the session as your reply. The pipeline continues from this gate without another stop.</div>
+        </div>
+      </section>`;
+    } else if (g === 'working') {
+      panel = `<section class="panel" aria-label="Activity">
+        <div class="p-head">${icon('work', 'work pulse')}<strong>Working</strong><span class="muted">${esc(r.working.label)}</span><span class="since">${icon('clock')}${fmtDur(now() - r.started)} in</span></div>
+        <div class="p-body"><ul class="activity">${(r.activity || []).map(([ts, text, live]) => `<li><span class="ts">${ts}</span><span class="${live ? 'live' : ''}">${text}</span></li>`).join('')}</ul></div>
+        <div class="p-foot"><span>No gate open. Next stop: ${esc(r.working.next)}.</span><button class="btn" data-interrupt>Send a message anyway</button></div>
+      </section>`;
+    } else {
+      const pr = r.stages.find((s) => s.id === 'pr').note;
+      panel = `<section class="panel" aria-label="Result">
+        <div class="p-head">${icon('done', 'ok')}<strong>${r.done.label}</strong><span class="since">${fmtDur(now() - r.done.when)} ago</span></div>
+        <div class="p-body"><p>${r.done.text || `<a href="https://${pr}" target="_blank" rel="noopener">${pr.replace('github.com/RoleModel/', '')}</a> merged with no review comments, so the feedback stage was skipped.`}</p><p class="muted">${r.done.note || 'The worktree is kept until you clear the run.'}</p></div>
+        <div class="p-foot"><span>${r.done.foot || 'Every stage closed.'}</span><button class="btn" data-clear>Clear from board</button></div>
+      </section>`;
+    }
+    el.innerHTML = `<div class="d-wrap">
+      <button class="btn d-back" data-back>${icon('back')}Runs</button>
+      <div class="d-head">
+        <div class="grow"><span class="key">${r.key}</span><h1>${esc(r.title)}</h1>
+          <div class="meta"><span class="badge kind">${r.kind}</span><span>${icon('branch')}<code>${esc(r.branch)}</code></span><span>${icon('clock')}started ${fmtDur(now() - r.started)} ago</span></div>
+        </div>
+        <div class="actions"><button class="btn" data-open>${icon('open')}Open in Claude Code <kbd>⌘O</kbd></button></div>
+      </div>
+      <div class="rail" aria-label="Stages">${rail}</div>
+      ${panel}
+      <h2 class="hist-h">Stage notes</h2>
+      <ul class="hist">${r.history.map(([a, b]) => `<li>${icon('done', 'skip')}<span><b>${esc(a)}</b> · ${esc(b)}</span></li>`).join('')}</ul>
+    </div>`;
+    const ta = el.querySelector('#answer');
+    if (ta) autosize(ta);
+  }
+
+  function autosize(ta) {
+    ta.style.height = 'auto';
+    ta.style.height = Math.min(160, ta.scrollHeight) + 'px';
+  }
+
+  function render() { renderList(); renderDetail(); }
+
+  function select(id, opts) {
+    selectedId = id;
+    $('app').dataset.view = id ? 'detail' : 'list';
+    render();
+    if (opts && opts.focusComposer) {
+      const ta = $('answer');
+      if (ta) { ta.focus(); ta.setSelectionRange(ta.value.length, ta.value.length); }
+    } else if (opts && opts.focusList) {
+      const row = $('list').querySelector('.row[aria-selected="true"]');
+      if (row) row.focus();
+    }
+  }
+
+  /* Transitions after an answer: the simulation that stands in for the real session. */
+  function setStage(r, id, status, note) {
+    const target = r.stages.findIndex((s) => s.id === id);
+    r.stages = r.stages.map((s, i) => {
+      if (i === target) return { ...s, status, note: note !== undefined ? note : s.note };
+      if (i < target && (s.status === 'pending' || s.status === 'active')) return { ...s, status: 'done' };
+      return s;
+    });
+  }
+  function toWorking(r, label, next, activity) {
+    r.gate = null; r.done = null;
+    r.working = { label, next };
+    r.activity = activity;
+  }
+  function openGate(r, id, kind, summary) {
+    r.working = null; r.done = null;
+    r.gate = { id, since: now(), summary, kind };
+    notify(r);
+    render();
+  }
+  const timers = [];
+  const later = (ms, fn) => timers.push(setTimeout(fn, ms));
+  const ts = () => { const d = new Date(); return String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0'); };
+
+  function answer(r, text) {
+    const gate = r.gate.id;
+    r.history.push([gate, text]);
+    delete composerDraft[r.id];
+    const gkind = r.gate.kind;
+    if (gate === 'G1') {
+      toWorking(r, 'grilling · drafting the plan from your answers', 'G2 plan', [[ts(), 'G1 · ' + esc(text)], [ts(), 'grilling · writing the plan summary', true]]);
+      later(6000, () => { openGate(r, 'G2', gkind === 'scope2' ? 'plan2' : 'plan', 'What ships, what is deferred · Implement?'); });
+    } else if (gate === 'G2') {
+      setStage(r, 'plan', 'done', (gkind === 'plan2' ? 'One PR, 3 pts' : 'One PR, 5 pts') + ' · G2: ' + text);
+      setStage(r, 'implement', 'active');
+      toWorking(r, 'tdd · writing the first red spec', 'G3 if the diff touches UI, otherwise review', [[ts(), 'G2 · ' + esc(text)], [ts(), 'tdd · <code>milestone_closer_spec.rb</code> · red', true]]);
+    } else if (gate === 'G3') {
+      setStage(r, 'implement', 'done', (r.stages.find((s) => s.id === 'implement').note || '') + ' · G3: go');
+      setStage(r, 'review', 'active');
+      toWorking(r, 'ready-for-review · spec-review and code-review running', 'G4 review triage', [[ts(), 'G3 · ' + esc(text)], [ts(), 'ready-for-review · 2 agents running', true]]);
+      later(9000, () => { openGate(r, 'G4', 'triage2', '2 findings · 2 fix'); });
+    } else if (gate === 'G4') {
+      toWorking(r, 'applying the fixes you chose', 'File PR, no stop', [[ts(), 'G4 · ' + esc(text)], [ts(), 'tdd · fixing finding 1', true]]);
+      later(7000, () => {
+        setStage(r, 'review', 'done', 'G4: ' + text);
+        setStage(r, 'pr', 'done', 'github.com/RoleModel/almanac/pull/1284');
+        r.working = { label: 'PR open · waiting for reviewers', next: 'G5 when a reviewer comments' };
+        r.activity = [[ts(), 'gh pr create · <a href="https://github.com/RoleModel/almanac/pull/1284" target="_blank" rel="noopener">almanac#1284</a>'], ...r.activity];
+        r.history.push(['File PR', 'almanac#1284']);
+        render();
+      });
+    } else if (gate === 'G5') {
+      setStage(r, 'feedback', 'done', '1 reply · re-read: no new comments');
+      r.gate = null; r.working = null;
+      r.done = { label: 'Replied', when: now(), text: 'Reply posted on <a href="https://github.com/RoleModel/almanac/pull/1271" target="_blank" rel="noopener">almanac#1271</a>. The PR was re-read afterwards: no new comments.', foot: 'Every stage closed. Clear the run once the PR merges.' };
+      r.history.push(['Feedback', 'replied to the reviewer, PR re-read']);
+    }
+    render();
+    toast(`Sent to ${r.key}`);
+  }
+
+  /* Notifications and toasts */
+  function notify(r) {
+    const n = document.createElement('div');
+    n.className = 'notice'; n.setAttribute('role', 'status');
+    n.innerHTML = `<div class="appicon">${icon('bell')}</div><div>
+      <div class="nh"><span>Pipelines</span><span>now</span></div>
+      <div class="nt">${r.key} needs you</div>
+      <div class="nb">${r.gate.id} ${GATE_NAME[r.gate.id]} · ${esc(r.gate.summary)}</div>
+      <div class="na"><button class="btn primary" data-reply>Reply</button><button class="btn" data-later>Later</button></div></div>`;
+    n.querySelector('[data-reply]').addEventListener('click', () => { n.remove(); select(r.id, { focusComposer: true }); });
+    n.querySelector('[data-later]').addEventListener('click', () => n.remove());
+    $('notices').appendChild(n);
+    later(12000, () => n.remove());
+  }
+  function toast(text) {
+    const t = document.createElement('div');
+    t.className = 'toast'; t.textContent = text;
+    $('app').appendChild(t);
+    later(2200, () => t.remove());
+  }
+
+  /* Events */
+  $('list').addEventListener('click', (e) => {
+    const row = e.target.closest('.row');
+    if (row) select(row.dataset.id, { focusList: true });
+  });
+  $('list').addEventListener('keydown', (e) => {
+    const flat = ordered().flat;
+    const i = flat.findIndex((r) => r.id === selectedId);
+    if (e.key === 'ArrowDown' || e.key === 'j') { e.preventDefault(); select(flat[Math.min(flat.length - 1, i + 1)].id, { focusList: true }); }
+    else if (e.key === 'ArrowUp' || e.key === 'k') { e.preventDefault(); select(flat[Math.max(0, i - 1)].id, { focusList: true }); }
+    else if (e.key === 'n' && !e.metaKey && !e.ctrlKey) { e.preventDefault(); openSheet(); }
+    else if (e.key === 'Enter') { e.preventDefault(); const ta = $('answer'); if (ta) ta.focus(); else $('detail').querySelector('.btn:not(.d-back)').focus(); }
+  });
+  $('detail').addEventListener('click', (e) => {
+    const r = byId(selectedId);
+    const quick = e.target.closest('[data-quick]');
+    if (quick) {
+      composerDraft[r.id] = quick.dataset.quick;
+      renderDetail();
+      const ta = $('answer'); ta.focus(); ta.setSelectionRange(ta.value.length, ta.value.length);
+      return;
+    }
+    if (e.target.closest('[data-open]')) { toast(`Opening ${r.key} in Claude Code`); return; }
+    if (e.target.closest('[data-back]')) { selectedId = null; $('app').dataset.view = 'list'; render(); return; }
+    if (e.target.closest('[data-interrupt]')) { toast('Interrupting between gates blocks a session you may not be watching. Open it in Claude Code instead.'); return; }
+    if (e.target.closest('[data-clear]')) {
+      runs.splice(runs.indexOf(r), 1);
+      const next = ordered().flat[0];
+      select(next ? next.id : null, { focusList: true });
+      toast(`${r.key} cleared`);
+      return;
+    }
+  });
+  $('detail').addEventListener('submit', (e) => {
+    if (e.target.id !== 'answer-form') return;
+    e.preventDefault();
+    const r = byId(selectedId);
+    const text = $('answer').value.trim();
+    if (!text) { $('answer').focus(); return; }
+    answer(r, text);
+    const row = $('list').querySelector('.row[aria-selected="true"]');
+    if (row) row.focus();
+  });
+  $('detail').addEventListener('input', (e) => {
+    if (e.target.id === 'answer') {
+      composerDraft[selectedId] = e.target.value;
+      autosize(e.target);
+      e.target.closest('.composer').querySelectorAll('.chip').forEach((c) => c.classList.toggle('on', c.dataset.quick === e.target.value));
+    }
+  });
+  $('detail').addEventListener('keydown', (e) => {
+    if (e.target.id === 'answer' && e.key === 'Enter' && (e.metaKey || e.ctrlKey)) { e.preventDefault(); $('send').click(); }
+    if (e.target.id === 'answer' && e.key === 'Escape') { e.target.blur(); const row = $('list').querySelector('.row[aria-selected="true"]'); if (row) row.focus(); }
+  });
+
+  document.addEventListener('keyup', (e) => { if (e.key === 'Meta') $('app').classList.remove('meta'); });
+  window.addEventListener('blur', () => $('app').classList.remove('meta'));
+  document.addEventListener('keydown', (e) => {
+    const mod = e.metaKey || e.ctrlKey;
+    if (e.key === 'Meta') $('app').classList.add('meta');
+    if (mod && e.key === 'k') { e.preventDefault(); openPalette(); return; }
+    if (mod && e.key === 'n') { e.preventDefault(); openSheet(); return; }
+    if (!$('sheet').hidden) return;
+    if (mod && e.key === 'o') { e.preventDefault(); if (selectedId) toast(`Opening ${byId(selectedId).key} in Claude Code`); return; }
+    if (mod && /^[1-9]$/.test(e.key)) {
+      const flat = ordered().flat; const r = flat[Number(e.key) - 1];
+      if (r) { e.preventDefault(); select(r.id, { focusComposer: !!r.gate, focusList: !r.gate }); }
+      return;
+    }
+    if (e.key === 'Escape' && !$('palette').hidden) closePalette();
+  });
+
+  /* New run sheet */
+  const ISSUES = [
+    { key: 'ALM-520', title: 'Partner pulse digest email', kind: 'feature', state: 'Todo', pts: 3 },
+    { key: 'ALM-521', title: 'Milestone close emails the PM twice', kind: 'bug', state: 'Todo', pts: 1 },
+    { key: 'ALM-515', title: 'Utilization export grouped by team', kind: 'feature', state: 'Backlog', pts: 2 },
+    { key: 'ALM-466', title: 'Deliverable search facets', kind: 'feature', state: 'In Progress', pts: 3, pr: 'github.com/RoleModel/almanac/pull/1260' },
+    { key: 'ALM-480', title: 'Partner create/update tools', kind: 'feature', state: 'In Progress', pts: 3 },
+    { key: 'TAS-204', title: 'Budget scan ignores archived milestones', kind: 'bug', state: 'Todo', pts: 2 },
+    { key: 'CP-91', title: 'Pipeline plugin: G3 fallback without a dev server', kind: 'feature', state: 'Todo', pts: 1 },
+  ];
+  const REPO_BY_PREFIX = { ALM: 'RoleModel/almanac', TAS: 'RoleModel/tassel', CP: 'RoleModel/claude-plugins' };
+  let nrKind = 'feature', nrIssue = null, nrPick = -1, nrKindTouched = false, nrRepoTouched = false;
+  const slug = (t) => t.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 48).replace(/-+$/g, '');
+  const parseTask = (raw) => { const m = raw.trim().match(/^([A-Za-z]{2,}-\d+)\s*(.*)$/); return m ? { key: m[1].toUpperCase(), title: m[2] || '' } : { key: null, title: raw.trim() }; };
+  const onBoard = (key) => runs.find((r) => r.key === key);
+  const issueMatches = (q) => { q = q.trim().toLowerCase(); return ISSUES.filter((i) => !q || (i.key + ' ' + i.title).toLowerCase().includes(q)); };
+
+  function setKind(k) {
+    nrKind = k;
+    $('sheet').querySelectorAll('[data-kind]').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.kind === k)));
+    updateDerived();
+  }
+  function updateDerived() {
+    const raw = $('nr-task').value.trim();
+    const branch = slug(raw);
+    const repo = $('nr-repo').value.replace('RoleModel/', '');
+    $('nr-branch').textContent = branch;
+    $('nr-cmd').innerHTML = raw
+      ? `~/work/${esc(repo)}/${esc(branch)} $ <b>claude</b> -p "/pipeline ${nrKind} ${esc(raw)}" --output-format stream-json`
+      : `~/work/${esc(repo)}/… $ <b>claude</b> -p "/pipeline ${nrKind} …" --output-format stream-json`;
+    const { key } = parseTask(raw);
+    const dup = key && onBoard(key);
+    const err = $('nr-err');
+    if (dup) {
+      const st = activeStage(dup);
+      err.textContent = `${dup.key} is already on the board (${st.label}${dup.gate ? ' · ' + dup.gate.id + ' ' + GATE_NAME[dup.gate.id] : ''}).`;
+      err.hidden = false;
+      $('nr-start').innerHTML = 'Go to run <kbd>⌘↩</kbd>';
+    } else {
+      if (!err.dataset.keep) err.hidden = true;
+      $('nr-start').innerHTML = 'Start run <kbd>⌘↩</kbd>';
+    }
+    const sub = $('nr-issue');
+    if (nrIssue) {
+      const short = nrIssue.pr ? nrIssue.pr.replace('github.com/RoleModel/', '').replace('/pull/', '#') : '';
+      sub.textContent = `Linear · ${nrIssue.state} · ${nrIssue.pts} pt${nrIssue.pts === 1 ? '' : 's'}` + (short ? ` · open PR ${short}` : '');
+    } else sub.textContent = raw && !key ? 'No Linear issue. The run is named by this title.' : '';
+  }
+  function renderPicker() {
+    const list = $('nr-list');
+    const items = issueMatches($('nr-task').value);
+    nrPick = Math.max(-1, Math.min(nrPick, items.length - 1));
+    list.innerHTML = items.length
+      ? items.map((i, n) => {
+          const dup = onBoard(i.key);
+          const meta = dup ? '<span class="meta warn">On the board</span>' : i.pr ? '<span class="meta warn">PR open</span>' : `<span class="meta">${i.state} · ${i.pts} pt${i.pts === 1 ? '' : 's'}</span>`;
+          return `<li role="option" data-n="${n}" aria-selected="${n === nrPick}"><span class="key">${i.key}</span><span class="ttl">${esc(i.title)}</span>${meta}</li>`;
+        }).join('')
+      : '<li class="none">No matching issue. Start with this title.</li>';
+    list.hidden = false;
+    $('nr-task').setAttribute('aria-expanded', 'true');
+  }
+  function closePicker() { $('nr-list').hidden = true; $('nr-task').setAttribute('aria-expanded', 'false'); nrPick = -1; }
+  function chooseIssue(i) {
+    nrIssue = i;
+    $('nr-task').value = `${i.key} ${i.title}`;
+    if (!nrKindTouched) setKind(i.kind);
+    if (!nrRepoTouched) { const repo = REPO_BY_PREFIX[i.key.split('-')[0]]; if (repo) $('nr-repo').value = repo; }
+    closePicker();
+    updateDerived();
+  }
+  function openSheet() {
+    closePalette();
+    nrIssue = null; nrKindTouched = false; nrRepoTouched = false;
+    $('nr-task').value = ''; $('nr-task').removeAttribute('aria-invalid'); $('nr-err').hidden = true; delete $('nr-err').dataset.keep;
+    $('nr-repo').value = 'RoleModel/almanac'; $('nr-open').checked = false;
+    setKind('feature');
+    closePicker();
+    $('sheet').hidden = false;
+    $('nr-task').focus();
+  }
+  function closeSheet() { $('sheet').hidden = true; }
+  function startRun() {
+    const raw = $('nr-task').value.trim();
+    if (!raw) { $('nr-err').textContent = 'Name the task. Pick a Linear issue, or type a short title.'; $('nr-err').hidden = false; $('nr-err').dataset.keep = '1'; $('nr-task').setAttribute('aria-invalid', 'true'); $('nr-task').focus(); return; }
+    const { key, title } = parseTask(raw);
+    const dup = key && onBoard(key);
+    if (dup) { closeSheet(); select(dup.id, { focusComposer: !!dup.gate, focusList: !dup.gate }); toast(`${dup.key} is already on the board`); return; }
+    const name = key || title;
+    const branch = slug(raw) || 'new-run';
+    const repo = $('nr-repo').value;
+    const issue = nrIssue;
+    const kind = nrKind;
+    const r = {
+      id: 'run-' + Date.now(), key: key || 'NEW', title: title || raw, kind, branch, started: now(),
+      stages: stages(kind, kind === 'feature' ? { plan: 'active' } : { implement: 'active' }),
+      gate: null,
+      working: { label: 'checking the work does not already exist', next: kind === 'feature' ? 'G1 scope' : 'G3 if the fix touches UI, otherwise review' },
+      activity: [[ts(), `Step 0 · ${issue ? 'reading ' + issue.key + ' in Linear, then' : ''} searching open PRs and branches in ${esc(repo)}`.replace('  ', ' '), true]],
+      history: [['Started', `${kind} pipeline, worktree ${branch}${issue ? ' · Linear ' + issue.state : ''}`]],
+    };
+    runs.unshift(r);
+    const openToo = $('nr-open').checked;
+    closeSheet();
+    select(r.id, { focusList: true });
+    toast(openToo ? `Started ${name} · opening in Claude Code` : `Started ${name}`);
+    later(5000, () => {
+      if (!runs.includes(r)) return;
+      r.activity = r.activity.map(([a, b]) => [a, b]);
+      if (issue && issue.pr) {
+        const short = issue.pr.replace('github.com/RoleModel/', '').replace('/pull/', '#');
+        r.stages = r.stages.map((st) => ({ ...st, status: 'skipped', note: st.id === 'pr' ? issue.pr : '' }));
+        r.working = null;
+        r.done = { label: 'Already open', when: now(), text: `<a href="https://${issue.pr}" target="_blank" rel="noopener">${short}</a> is already open for ${issue.key}. The pipeline reported it and stopped; nothing was started.`, note: 'No worktree was created.', foot: 'Nothing to do here.' };
+        r.activity.unshift([ts(), `Step 0 · found ${short} open for ${issue.key} · stopped`]);
+        r.history.push(['Step 0', `${short} already open · stopped`]);
+        render();
+        toast(`${issue.key} already has an open PR`);
+        return;
+      }
+      r.activity.unshift([ts(), 'Step 0 · nothing open for this work']);
+      if (kind === 'feature') {
+        openGate(r, 'G1', 'scope2', `One PR, ${issue ? issue.pts : 3} pts · two questions`);
+      } else {
+        r.working = { label: 'tdd · writing the regression spec', next: 'G3 if the fix touches UI, otherwise review' };
+        r.activity.unshift([ts(), 'tdd · reproducing the bug in a spec', true]);
+        render();
+      }
+    });
+  }
+  $('btn-new').addEventListener('click', openSheet);
+  $('sheet').addEventListener('click', (e) => {
+    if (e.target === $('sheet') || e.target.closest('[data-cancel]')) { closeSheet(); return; }
+    const k = e.target.closest('[data-kind]');
+    if (k) { nrKindTouched = true; setKind(k.dataset.kind); }
+    const li = e.target.closest('#nr-list li[data-n]');
+    if (li) chooseIssue(issueMatches($('nr-task').value)[Number(li.dataset.n)]);
+  });
+  $('nr-list').addEventListener('mousedown', (e) => e.preventDefault());
+  $('nr-task').addEventListener('focus', () => { nrPick = -1; renderPicker(); });
+  $('nr-task').addEventListener('blur', () => closePicker());
+  $('nr-task').addEventListener('input', () => {
+    const v = $('nr-task').value;
+    nrIssue = ISSUES.find((i) => `${i.key} ${i.title}` === v.trim()) || null;
+    $('nr-task').removeAttribute('aria-invalid'); delete $('nr-err').dataset.keep;
+    nrPick = -1; renderPicker(); updateDerived();
+  });
+  $('nr-task').addEventListener('keydown', (e) => {
+    const open = !$('nr-list').hidden;
+    const items = issueMatches($('nr-task').value);
+    if (e.key === 'ArrowDown') { e.preventDefault(); nrPick = Math.min(items.length - 1, nrPick + 1); renderPicker(); }
+    else if (e.key === 'ArrowUp') { e.preventDefault(); nrPick = Math.max(-1, nrPick - 1); renderPicker(); }
+    else if (e.key === 'Enter' && !e.metaKey && !e.ctrlKey) { e.preventDefault(); if (open && nrPick >= 0) chooseIssue(items[nrPick]); else if (open && items.length === 1 && $('nr-task').value.trim()) chooseIssue(items[0]); else closePicker(); }
+    else if (e.key === 'Escape' && open) { e.preventDefault(); e.stopPropagation(); closePicker(); }
+  });
+  $('nr-repo').addEventListener('change', () => { nrRepoTouched = true; updateDerived(); });
+  $('newrun-form').addEventListener('submit', (e) => { e.preventDefault(); startRun(); });
+  $('sheet').addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') { e.preventDefault(); closeSheet(); }
+    else if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) { e.preventDefault(); startRun(); }
+  });
+
+  /* Command palette */
+  let palIndex = 0;
+  function palItems(q) {
+    q = q.trim().toLowerCase();
+    const flat = ordered().flat;
+    const items = flat.filter((r) => !q || (r.key + ' ' + r.title + ' ' + (r.gate ? r.gate.id + ' ' + GATE_NAME[r.gate.id] : '')).toLowerCase().includes(q))
+      .map((r, i) => ({ kind: 'run', id: r.id, label: r.title, key: r.key, trail: r.gate ? `${r.gate.id} · waiting ${fmtDur(now() - r.gate.since)}` : group(r) === 'done' ? r.done.label : 'working', glyph: r.gate ? icon('attn', 'attn') : group(r) === 'done' ? icon('done', 'ok') : icon('work', 'work') }));
+    const cmds = [
+      { kind: 'cmd', id: 'new', label: 'New run', trail: '⌘N', glyph: icon('plus') },
+      { kind: 'cmd', id: 'next', label: 'Jump to the run waiting longest', trail: '', glyph: icon('attn', 'attn') },
+      { kind: 'cmd', id: 'theme', label: 'Toggle appearance', trail: '', glyph: icon('moon') },
+      { kind: 'cmd', id: 'open', label: 'Open selected run in Claude Code', trail: '⌘O', glyph: icon('open') },
+      { kind: 'cmd', id: 'clear', label: 'Clear the board', trail: '', glyph: icon('skipped') },
+      { kind: 'cmd', id: 'reset', label: 'Reset sample runs', trail: '', glyph: icon('pending') },
+    ].filter((c) => !q || c.label.toLowerCase().includes(q));
+    return { items, cmds };
+  }
+  function renderPalette() {
+    const { items, cmds } = palItems($('pal-input').value);
+    const all = [...items, ...cmds];
+    palIndex = Math.max(0, Math.min(palIndex, all.length - 1));
+    let html = '';
+    if (items.length) html += `<li class="ph">Runs</li>` + items.map((it, i) => `<li><button class="${i === palIndex ? 'hl' : ''}" data-i="${i}">${it.glyph}<span><span class="key">${it.key}</span> ${esc(it.label)}</span><span class="trail">${it.trail}</span></button></li>`).join('');
+    if (cmds.length) html += `<li class="ph">Commands</li>` + cmds.map((it, j) => { const i = items.length + j; return `<li><button class="${i === palIndex ? 'hl' : ''}" data-i="${i}">${it.glyph}<span>${esc(it.label)}</span><span class="trail">${it.trail}</span></button></li>`; }).join('');
+    if (!all.length) html = `<li class="group-empty">Nothing matches.</li>`;
+    $('pal-list').innerHTML = html;
+  }
+  function runPal(i) {
+    const { items, cmds } = palItems($('pal-input').value);
+    const it = [...items, ...cmds][i];
+    if (!it) return;
+    closePalette();
+    if (it.kind === 'run') select(it.id, { focusComposer: !!byId(it.id).gate, focusList: !byId(it.id).gate });
+    else if (it.id === 'next') { const r = ordered().needs[0]; if (r) select(r.id, { focusComposer: true }); else toast('Nothing is waiting on you'); }
+    else if (it.id === 'new') openSheet();
+    else if (it.id === 'theme') toggleTheme();
+    else if (it.id === 'open') toast(selectedId ? `Opening ${byId(selectedId).key} in Claude Code` : 'Select a run first');
+    else if (it.id === 'clear') { runs.splice(0, runs.length); selectedId = null; render(); toast('Board cleared'); }
+    else if (it.id === 'reset') { runs.splice(0, runs.length, ...clone(SEED_RUNS)); const f = ordered().needs[0]; selectedId = f ? f.id : null; render(); toast('Sample runs restored'); }
+  }
+  function openPalette() { palIndex = 0; $('palette').hidden = false; $('pal-input').value = ''; renderPalette(); $('pal-input').focus(); }
+  function closePalette() { $('palette').hidden = true; }
+  $('btn-palette').addEventListener('click', openPalette);
+  $('palette').addEventListener('click', (e) => { if (e.target === $('palette')) closePalette(); const b = e.target.closest('[data-i]'); if (b) runPal(Number(b.dataset.i)); });
+  $('pal-input').addEventListener('input', () => { palIndex = 0; renderPalette(); });
+  $('pal-input').addEventListener('keydown', (e) => {
+    if (e.key === 'ArrowDown') { e.preventDefault(); palIndex += 1; renderPalette(); }
+    else if (e.key === 'ArrowUp') { e.preventDefault(); palIndex -= 1; renderPalette(); }
+    else if (e.key === 'Enter') { e.preventDefault(); runPal(palIndex); }
+    else if (e.key === 'Escape') { closePalette(); }
+  });
+
+  /* Theme */
+  function themeIcon() {
+    const dark = document.documentElement.dataset.theme === 'dark' || (!document.documentElement.dataset.theme && matchMedia('(prefers-color-scheme: dark)').matches);
+    $('btn-theme').innerHTML = `<svg class="ico" aria-hidden="true"><use href="#i-${dark ? 'sun' : 'moon'}"/></svg>`;
+  }
+  function toggleTheme() {
+    const dark = document.documentElement.dataset.theme === 'dark' || (!document.documentElement.dataset.theme && matchMedia('(prefers-color-scheme: dark)').matches);
+    document.documentElement.dataset.theme = dark ? 'light' : 'dark';
+    try { localStorage.setItem('pipelines-theme', document.documentElement.dataset.theme); } catch (err) {}
+    themeIcon();
+  }
+  $('btn-theme').addEventListener('click', toggleTheme);
+  try { const t = localStorage.getItem('pipelines-theme'); if (t === 'dark' || t === 'light') document.documentElement.dataset.theme = t; } catch (err) {}
+  themeIcon();
+
+  /* Boot: the longest-waiting run is selected, and one working run reaches a gate after a while. */
+  const first = ordered().needs[0];
+  selectedId = first ? first.id : null;
+  if (matchMedia('(max-width: 760px)').matches) $('app').dataset.view = 'list'; else $('app').dataset.view = 'detail';
+  render();
+  setInterval(render, 30000);
+  later(28000, () => {
+    const r = byId('alm-497');
+    if (!r || r.gate || !r.working) return;
+    setStage(r, 'implement', 'active', '18 specs green · 3 commits');
+    r.activity = [[ts(), 'tdd · 18 of 18 green'], [ts(), 'Commit · Add the CSV download to the utilization report'], ...r.activity];
+    openGate(r, 'G3', 'visual2', 'Screenshot on dev data · 2 compromises');
+  });
+})();
+</script>

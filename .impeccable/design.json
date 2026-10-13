@@ -1,0 +1,610 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-10-13T00:00:00Z",
+  "title": "Design System: Pipelines",
+  "extensions": {
+    "colorMeta": {
+      "accent": {
+        "role": "primary",
+        "displayName": "System Blue",
+        "canonical": "#0a6bf2",
+        "dark": "#3d86f7",
+        "tonalRamp": [
+          "oklch(22% 0.12 262)",
+          "oklch(32% 0.16 262)",
+          "oklch(42% 0.19 262)",
+          "oklch(52% 0.21 262)",
+          "oklch(62% 0.18 262)",
+          "oklch(74% 0.12 262)",
+          "oklch(86% 0.07 262)",
+          "oklch(95% 0.02 262)"
+        ]
+      },
+      "accent-fg": {
+        "role": "primary",
+        "displayName": "On Accent",
+        "canonical": "#ffffff",
+        "dark": "#ffffff",
+        "tonalRamp": [
+          "oklch(15% 0 0)",
+          "oklch(30% 0 0)",
+          "oklch(45% 0 0)",
+          "oklch(60% 0 0)",
+          "oklch(72% 0 0)",
+          "oklch(84% 0 0)",
+          "oklch(92% 0 0)",
+          "oklch(100% 0 0)"
+        ]
+      },
+      "accent-bg": {
+        "role": "primary",
+        "displayName": "Blue Tint",
+        "canonical": "#e9f1fe",
+        "dark": "#18284a",
+        "tonalRamp": [
+          "oklch(22% 0.06 262)",
+          "oklch(32% 0.07 262)",
+          "oklch(45% 0.08 262)",
+          "oklch(58% 0.08 262)",
+          "oklch(70% 0.07 262)",
+          "oklch(82% 0.05 262)",
+          "oklch(90% 0.03 262)",
+          "oklch(96% 0.015 262)"
+        ]
+      },
+      "attn": {
+        "role": "secondary",
+        "displayName": "Needs-You Amber",
+        "canonical": "#d8640b",
+        "dark": "#ff8f3d",
+        "tonalRamp": [
+          "oklch(22% 0.07 55)",
+          "oklch(33% 0.11 55)",
+          "oklch(44% 0.14 55)",
+          "oklch(55% 0.17 55)",
+          "oklch(65% 0.17 55)",
+          "oklch(76% 0.13 55)",
+          "oklch(87% 0.07 55)",
+          "oklch(95% 0.03 55)"
+        ]
+      },
+      "attn-fg": {
+        "role": "secondary",
+        "displayName": "Amber Ink",
+        "canonical": "#964300",
+        "dark": "#ffb57a",
+        "tonalRamp": [
+          "oklch(20% 0.07 55)",
+          "oklch(30% 0.1 55)",
+          "oklch(40% 0.13 55)",
+          "oklch(50% 0.15 55)",
+          "oklch(62% 0.15 55)",
+          "oklch(74% 0.12 55)",
+          "oklch(86% 0.07 55)",
+          "oklch(95% 0.03 55)"
+        ]
+      },
+      "attn-bg": {
+        "role": "secondary",
+        "displayName": "Amber Tint",
+        "canonical": "#fff1e4",
+        "dark": "#3a2512",
+        "tonalRamp": [
+          "oklch(22% 0.04 55)",
+          "oklch(32% 0.05 55)",
+          "oklch(45% 0.06 55)",
+          "oklch(58% 0.07 55)",
+          "oklch(70% 0.07 55)",
+          "oklch(82% 0.06 55)",
+          "oklch(90% 0.04 55)",
+          "oklch(96% 0.02 55)"
+        ]
+      },
+      "work": {
+        "role": "secondary",
+        "displayName": "Working Blue",
+        "canonical": "#2e6ddb",
+        "dark": "#5e9dff",
+        "tonalRamp": [
+          "oklch(22% 0.1 262)",
+          "oklch(32% 0.14 262)",
+          "oklch(42% 0.17 262)",
+          "oklch(53% 0.18 262)",
+          "oklch(64% 0.16 262)",
+          "oklch(75% 0.11 262)",
+          "oklch(86% 0.06 262)",
+          "oklch(95% 0.02 262)"
+        ]
+      },
+      "work-bg": {
+        "role": "secondary",
+        "displayName": "Working Tint",
+        "canonical": "#e8effd",
+        "dark": "#16243e",
+        "tonalRamp": [
+          "oklch(22% 0.05 262)",
+          "oklch(32% 0.06 262)",
+          "oklch(45% 0.07 262)",
+          "oklch(58% 0.07 262)",
+          "oklch(70% 0.06 262)",
+          "oklch(82% 0.05 262)",
+          "oklch(90% 0.03 262)",
+          "oklch(96% 0.015 262)"
+        ]
+      },
+      "ok": {
+        "role": "secondary",
+        "displayName": "Done Green",
+        "canonical": "#1f8c4d",
+        "dark": "#46c27c",
+        "tonalRamp": [
+          "oklch(22% 0.06 152)",
+          "oklch(32% 0.09 152)",
+          "oklch(42% 0.12 152)",
+          "oklch(53% 0.14 152)",
+          "oklch(64% 0.14 152)",
+          "oklch(75% 0.11 152)",
+          "oklch(86% 0.07 152)",
+          "oklch(95% 0.03 152)"
+        ]
+      },
+      "ok-bg": {
+        "role": "secondary",
+        "displayName": "Done Tint",
+        "canonical": "#e5f4ea",
+        "dark": "#15301f",
+        "tonalRamp": [
+          "oklch(22% 0.04 152)",
+          "oklch(32% 0.05 152)",
+          "oklch(45% 0.06 152)",
+          "oklch(58% 0.06 152)",
+          "oklch(70% 0.06 152)",
+          "oklch(82% 0.05 152)",
+          "oklch(90% 0.03 152)",
+          "oklch(96% 0.02 152)"
+        ]
+      },
+      "skip": {
+        "role": "secondary",
+        "displayName": "Skipped Gray",
+        "canonical": "#9b9ba2",
+        "dark": "#707079",
+        "tonalRamp": [
+          "oklch(18% 0.005 280)",
+          "oklch(28% 0.006 280)",
+          "oklch(40% 0.007 280)",
+          "oklch(52% 0.008 280)",
+          "oklch(64% 0.008 280)",
+          "oklch(76% 0.007 280)",
+          "oklch(87% 0.005 280)",
+          "oklch(95% 0.003 280)"
+        ]
+      },
+      "pane": {
+        "role": "neutral",
+        "displayName": "Pane",
+        "canonical": "#ffffff",
+        "dark": "#1b1b1f",
+        "tonalRamp": [
+          "oklch(15% 0.004 280)",
+          "oklch(26% 0.004 280)",
+          "oklch(38% 0.004 280)",
+          "oklch(50% 0.004 280)",
+          "oklch(64% 0.004 280)",
+          "oklch(78% 0.003 280)",
+          "oklch(90% 0.002 280)",
+          "oklch(100% 0 0)"
+        ]
+      },
+      "list": {
+        "role": "neutral",
+        "displayName": "List",
+        "canonical": "#f5f5f7",
+        "dark": "#232327",
+        "tonalRamp": [
+          "oklch(16% 0.004 280)",
+          "oklch(27% 0.004 280)",
+          "oklch(39% 0.004 280)",
+          "oklch(51% 0.004 280)",
+          "oklch(65% 0.004 280)",
+          "oklch(79% 0.003 280)",
+          "oklch(91% 0.003 280)",
+          "oklch(97% 0.002 280)"
+        ]
+      },
+      "win": {
+        "role": "neutral",
+        "displayName": "Window Chrome",
+        "canonical": "#ededf0",
+        "dark": "#2b2b2f",
+        "tonalRamp": [
+          "oklch(17% 0.004 280)",
+          "oklch(28% 0.004 280)",
+          "oklch(40% 0.004 280)",
+          "oklch(52% 0.004 280)",
+          "oklch(66% 0.004 280)",
+          "oklch(80% 0.003 280)",
+          "oklch(89% 0.003 280)",
+          "oklch(95% 0.003 280)"
+        ]
+      },
+      "desk": {
+        "role": "neutral",
+        "displayName": "Desk",
+        "canonical": "#c9ced8",
+        "dark": "#141417",
+        "tonalRamp": [
+          "oklch(16% 0.01 265)",
+          "oklch(27% 0.012 265)",
+          "oklch(39% 0.014 265)",
+          "oklch(51% 0.015 265)",
+          "oklch(64% 0.015 265)",
+          "oklch(76% 0.014 265)",
+          "oklch(85% 0.012 265)",
+          "oklch(95% 0.006 265)"
+        ]
+      },
+      "field": {
+        "role": "neutral",
+        "displayName": "Field",
+        "canonical": "#ffffff",
+        "dark": "#27272c",
+        "tonalRamp": [
+          "oklch(15% 0.004 280)",
+          "oklch(26% 0.004 280)",
+          "oklch(38% 0.004 280)",
+          "oklch(50% 0.004 280)",
+          "oklch(64% 0.004 280)",
+          "oklch(78% 0.003 280)",
+          "oklch(90% 0.002 280)",
+          "oklch(100% 0 0)"
+        ]
+      },
+      "kbd": {
+        "role": "neutral",
+        "displayName": "Key Cap",
+        "canonical": "#f0f0f3",
+        "dark": "#333339",
+        "tonalRamp": [
+          "oklch(16% 0.004 280)",
+          "oklch(27% 0.004 280)",
+          "oklch(39% 0.004 280)",
+          "oklch(51% 0.004 280)",
+          "oklch(65% 0.004 280)",
+          "oklch(79% 0.003 280)",
+          "oklch(90% 0.003 280)",
+          "oklch(96% 0.002 280)"
+        ]
+      },
+      "sel": {
+        "role": "neutral",
+        "displayName": "Selection Gray",
+        "canonical": "#e3e3e8",
+        "dark": "#34343a",
+        "tonalRamp": [
+          "oklch(17% 0.005 280)",
+          "oklch(28% 0.005 280)",
+          "oklch(40% 0.005 280)",
+          "oklch(52% 0.005 280)",
+          "oklch(66% 0.005 280)",
+          "oklch(80% 0.004 280)",
+          "oklch(88% 0.004 280)",
+          "oklch(93% 0.004 280)"
+        ]
+      },
+      "line": {
+        "role": "neutral",
+        "displayName": "Line",
+        "canonical": "#d9d9de",
+        "dark": "#3a3a41",
+        "tonalRamp": [
+          "oklch(17% 0.005 280)",
+          "oklch(28% 0.005 280)",
+          "oklch(40% 0.005 280)",
+          "oklch(52% 0.005 280)",
+          "oklch(66% 0.005 280)",
+          "oklch(78% 0.004 280)",
+          "oklch(88% 0.004 280)",
+          "oklch(94% 0.003 280)"
+        ]
+      },
+      "line-soft": {
+        "role": "neutral",
+        "displayName": "Soft Line",
+        "canonical": "#e8e8ec",
+        "dark": "#2c2c32",
+        "tonalRamp": [
+          "oklch(17% 0.004 280)",
+          "oklch(28% 0.004 280)",
+          "oklch(40% 0.004 280)",
+          "oklch(52% 0.004 280)",
+          "oklch(66% 0.004 280)",
+          "oklch(80% 0.003 280)",
+          "oklch(90% 0.003 280)",
+          "oklch(95% 0.003 280)"
+        ]
+      },
+      "fg": {
+        "role": "neutral",
+        "displayName": "Ink",
+        "canonical": "#1c1c1f",
+        "dark": "#ececef",
+        "tonalRamp": [
+          "oklch(15% 0.004 280)",
+          "oklch(22% 0.004 280)",
+          "oklch(35% 0.004 280)",
+          "oklch(48% 0.004 280)",
+          "oklch(62% 0.004 280)",
+          "oklch(76% 0.003 280)",
+          "oklch(88% 0.003 280)",
+          "oklch(95% 0.002 280)"
+        ]
+      },
+      "fg-2": {
+        "role": "neutral",
+        "displayName": "Secondary Ink",
+        "canonical": "#68686f",
+        "dark": "#a1a1a9",
+        "tonalRamp": [
+          "oklch(16% 0.005 280)",
+          "oklch(28% 0.006 280)",
+          "oklch(40% 0.007 280)",
+          "oklch(50% 0.008 280)",
+          "oklch(62% 0.008 280)",
+          "oklch(74% 0.007 280)",
+          "oklch(86% 0.005 280)",
+          "oklch(95% 0.003 280)"
+        ]
+      },
+      "fg-3": {
+        "role": "neutral",
+        "displayName": "Tertiary Ink",
+        "canonical": "#9b9ba2",
+        "dark": "#707079",
+        "tonalRamp": [
+          "oklch(18% 0.005 280)",
+          "oklch(28% 0.006 280)",
+          "oklch(40% 0.007 280)",
+          "oklch(52% 0.008 280)",
+          "oklch(64% 0.008 280)",
+          "oklch(76% 0.007 280)",
+          "oklch(87% 0.005 280)",
+          "oklch(95% 0.003 280)"
+        ]
+      }
+    },
+    "typographyMeta": {
+      "title": {
+        "displayName": "Title",
+        "purpose": "The selected run's title; the only size above 15px."
+      },
+      "subtitle": {
+        "displayName": "Subtitle",
+        "purpose": "Empty-state heading and the palette input."
+      },
+      "body": {
+        "displayName": "Body",
+        "purpose": "Default text; the gate lede steps to 13.5px."
+      },
+      "body-dense": {
+        "displayName": "Body Dense",
+        "purpose": "Stage labels, notes, table cells, activity, history, chips, row subtitles."
+      },
+      "caption": {
+        "displayName": "Caption",
+        "purpose": "Key caps, row numbers, timestamps, reversal costs, hints and status bar at 11.5px."
+      },
+      "section-label": {
+        "displayName": "Section Label",
+        "purpose": "Uppercase header over a group of list items or table columns only; never a kicker."
+      },
+      "mono": {
+        "displayName": "Mono",
+        "purpose": "Issue keys, gate IDs (700), branches, timestamps, question letters."
+      }
+    },
+    "shadows": [
+      {
+        "name": "window",
+        "value": "0 1px 2px rgba(20, 22, 30, .08), 0 18px 48px -18px rgba(20, 22, 30, .35)",
+        "dark": "0 1px 2px rgba(0, 0, 0, .4), 0 18px 48px -18px rgba(0, 0, 0, .7)",
+        "purpose": "The app window and every surface that floats over it: notification, palette, toast."
+      },
+      {
+        "name": "composer-lift",
+        "value": "0 -8px 16px -12px rgba(20, 22, 30, .18)",
+        "purpose": "Upward fade on the sticky composer so scrolled gate content reads as beneath it."
+      },
+      {
+        "name": "focus-glow",
+        "value": "0 0 0 3px color-mix(in srgb, var(--accent) 22%, transparent)",
+        "purpose": "Focused textarea, paired with a 1px accent border. Buttons and rows use a 2px outline instead."
+      }
+    ],
+    "motion": [
+      {
+        "name": "pulse",
+        "value": "pulse 1.6s ease-in-out infinite (opacity 1 to .45)",
+        "purpose": "The working glyph only."
+      },
+      {
+        "name": "slidein",
+        "value": "translateX(24px) to none, opacity 0 to 1, .28s cubic-bezier(.2, .8, .2, 1)",
+        "purpose": "Notification card entrance; the toast uses the same keyframes at .2s ease-out."
+      },
+      {
+        "name": "reveal",
+        "value": "opacity .12s",
+        "purpose": "Row numbers appearing on list hover or focus."
+      },
+      {
+        "name": "reduced-motion",
+        "value": "animation: none; transition: none",
+        "purpose": "Everything, under prefers-reduced-motion: reduce."
+      },
+      {
+        "name": "sheet-drop",
+        "value": "translateY(-14px) \u2192 none, opacity 0 \u2192 1, 0.22s cubic-bezier(.2,.8,.2,1)",
+        "purpose": "The New Run sheet dropping from the title bar; a reveal, not decoration. Removed under prefers-reduced-motion."
+      }
+    ],
+    "breakpoints": [
+      {
+        "name": "compact",
+        "value": "760px",
+        "purpose": "Below this the window frame drops, the split becomes one column switched by data-view, key caps and row numbers hide."
+      }
+    ],
+    "darkMode": "Dark values are applied by both `@media (prefers-color-scheme: dark) :root:not([data-theme=light])` and `:root[data-theme=dark]`, token for token; every new color must be defined in all three blocks."
+  },
+  "components": [
+    {
+      "name": "Default Button",
+      "kind": "button",
+      "refersTo": "button-default",
+      "description": "Secondary action: Open in Claude Code, Later, Clear from board. 28px, line border, hover to selection gray.",
+      "html": "<button class=\"ds-btn\"><svg class=\"ds-ico\" viewBox=\"0 0 16 16\" aria-hidden=\"true\"><path d=\"M6.5 3.5H4a1 1 0 0 0-1 1V12a1 1 0 0 0 1 1h7.5a1 1 0 0 0 1-1V9.5M9.5 3h3.5v3.5M13 3L7.5 8.5\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.5\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/></svg>Open in Claude Code <kbd class=\"ds-kbd\">\u2318O</kbd></button>",
+      "css": ".ds-btn { display: inline-flex; align-items: center; gap: 7px; height: 28px; padding: 0 10px; border-radius: 7px; border: 1px solid var(--line, #d9d9de); background: var(--pane, #fff); color: var(--fg, #1c1c1f); font: 500 13px/1.45 -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Helvetica Neue', Helvetica, Arial, sans-serif; white-space: nowrap; cursor: pointer; } .ds-btn:hover { background: var(--sel, #e3e3e8); } .ds-btn:focus-visible { outline: 2px solid var(--accent, #0a6bf2); outline-offset: 1px; } .ds-btn:disabled { opacity: .5; cursor: default; } .ds-ico { width: 16px; height: 16px; flex: none; } .ds-kbd { margin-left: 2px; font-size: 11px; color: var(--fg-2, #68686f); background: var(--kbd, #f0f0f3); border: 1px solid var(--line, #d9d9de); border-radius: 4px; padding: 0 5px; line-height: 16px; }"
+    },
+    {
+      "name": "Primary Button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "The one primary action in view: Send (Cmd+Return) in the composer, Reply in a notification.",
+      "html": "<button class=\"ds-btn-primary\"><svg class=\"ds-ico\" viewBox=\"0 0 16 16\" aria-hidden=\"true\"><path d=\"M8 13V3.5M4.5 7L8 3.5 11.5 7\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.5\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/></svg>Send <kbd class=\"ds-kbd-on\">\u2318\u21a9</kbd></button>",
+      "css": ".ds-btn-primary { display: inline-flex; align-items: center; gap: 7px; height: 28px; padding: 0 10px; border-radius: 7px; border: 1px solid var(--accent, #0a6bf2); background: var(--accent, #0a6bf2); color: #fff; font: 500 13px/1.45 -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Helvetica Neue', Helvetica, Arial, sans-serif; white-space: nowrap; cursor: pointer; } .ds-btn-primary:hover { filter: brightness(.95); } .ds-btn-primary:focus-visible { outline: 2px solid var(--accent, #0a6bf2); outline-offset: 1px; } .ds-ico { width: 16px; height: 16px; flex: none; } .ds-kbd-on { margin-left: 2px; font-size: 11px; color: #fff; background: rgba(255,255,255,.18); border: 1px solid transparent; border-radius: 4px; padding: 0 5px; line-height: 16px; }"
+    },
+    {
+      "name": "Quick Reply Chip",
+      "kind": "chip",
+      "refersTo": "chip-quick-reply",
+      "description": "The gate's own quick replies; selecting one seeds the composer. Pill, line border, accent when on.",
+      "html": "<div class=\"ds-quick\"><button class=\"ds-chip ds-chip-on\">go</button><button class=\"ds-chip\">fix 1 and 3</button><button class=\"ds-chip\">keep the defaults</button></div>",
+      "css": ".ds-quick { display: flex; flex-wrap: wrap; gap: 6px; } .ds-chip { height: 26px; padding: 0 10px; border-radius: 13px; border: 1px solid var(--line, #d9d9de); background: var(--pane, #fff); color: var(--fg, #1c1c1f); font: 400 12px/1.45 -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Helvetica Neue', Helvetica, Arial, sans-serif; cursor: pointer; } .ds-chip:hover { background: var(--sel, #e3e3e8); } .ds-chip:focus-visible { outline: 2px solid var(--accent, #0a6bf2); outline-offset: 1px; } .ds-chip-on { border-color: var(--accent, #0a6bf2); background: var(--accent-bg, #e9f1fe); color: var(--accent, #0a6bf2); }"
+    },
+    {
+      "name": "Composer Textarea",
+      "kind": "input",
+      "refersTo": "textarea-composer",
+      "description": "The one-line gate answer field. Line border at rest, accent border plus 22% glow on focus.",
+      "html": "<textarea class=\"ds-field\" rows=\"1\" placeholder=\"Answer G2 in a line\u2026\"></textarea>",
+      "css": ".ds-field { width: 100%; min-height: 34px; max-height: 160px; resize: none; padding: 7px 10px; border-radius: 7px; border: 1px solid var(--line, #d9d9de); background: var(--field, #fff); color: var(--fg, #1c1c1f); font: 400 13px/18px -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Helvetica Neue', Helvetica, Arial, sans-serif; } .ds-field::placeholder { color: var(--fg-3, #9b9ba2); } .ds-field:focus { outline: none; border-color: var(--accent, #0a6bf2); box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent, #0a6bf2) 22%, transparent); }"
+    },
+    {
+      "name": "Run List Row",
+      "kind": "nav",
+      "refersTo": "list-row",
+      "description": "One run in the left list: status glyph, mono key, title, stage subtitle, tabular wait. Gray selection unfocused, system blue when the list has focus.",
+      "html": "<nav class=\"ds-list\" tabindex=\"0\"><div class=\"ds-group-h ds-group-attn\"><span>Needs you</span><span class=\"ds-n\">2</span></div><button class=\"ds-row ds-row-needs\" aria-selected=\"true\"><svg class=\"ds-glyph ds-glyph-attn\" viewBox=\"0 0 16 16\" aria-hidden=\"true\"><circle cx=\"8\" cy=\"8\" r=\"6.75\" fill=\"currentColor\"/><path d=\"M8 4.6v4\" stroke=\"#fff\" stroke-width=\"1.5\" stroke-linecap=\"round\"/><circle cx=\"8\" cy=\"11.2\" r=\".95\" fill=\"#fff\"/></svg><span><span class=\"ds-t\"><span class=\"ds-key\">ALM-480</span><span class=\"ds-name\">Partner create/update tools</span></span><span class=\"ds-muted\">Plan \u00b7 G2 Plan</span></span><span class=\"ds-wait\">2h 10m</span></button><button class=\"ds-row\" aria-selected=\"false\"><svg class=\"ds-glyph ds-glyph-work\" viewBox=\"0 0 16 16\" aria-hidden=\"true\"><circle cx=\"8\" cy=\"8\" r=\"6\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.5\"/><path d=\"M8 4.5V8l2.3 1.6\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.5\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/></svg><span><span class=\"ds-t\"><span class=\"ds-key\">ALM-512</span><span class=\"ds-name\">Utilization CSV download</span></span><span class=\"ds-muted\">Implement \u00b7 running tests</span></span><span class=\"ds-wait\">48m in</span></button></nav>",
+      "css": ".ds-list { width: 320px; background: var(--list, #f5f5f7); border-right: 1px solid var(--line, #d9d9de); padding: 6px 0 14px; font: 400 13px/1.45 -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Helvetica Neue', Helvetica, Arial, sans-serif; color: var(--fg, #1c1c1f); } .ds-list:focus { outline: none; } .ds-group-h { padding: 10px 14px 4px; font-size: 11px; font-weight: 600; letter-spacing: .04em; text-transform: uppercase; color: var(--fg-2, #68686f); display: flex; justify-content: space-between; align-items: baseline; } .ds-group-h .ds-n { font-weight: 500; color: var(--fg-3, #9b9ba2); font-variant-numeric: tabular-nums; } .ds-group-attn, .ds-group-attn .ds-n { color: var(--attn, #d8640b); } .ds-row { width: calc(100% - 12px); margin: 0 6px 1px; display: grid; grid-template-columns: 16px minmax(0, 1fr) auto; column-gap: 10px; align-items: start; text-align: left; padding: 7px 8px 8px; border: 0; border-radius: 7px; background: none; color: inherit; font: inherit; cursor: pointer; } .ds-row:hover, .ds-row[aria-selected=true] { background: var(--sel, #e3e3e8); } .ds-list:focus-within .ds-row[aria-selected=true] { background: var(--accent, #0a6bf2); color: #fff; } .ds-list:focus-within .ds-row[aria-selected=true] .ds-muted, .ds-list:focus-within .ds-row[aria-selected=true] .ds-key, .ds-list:focus-within .ds-row[aria-selected=true] .ds-wait { color: rgba(255,255,255,.82); } .ds-list:focus-within .ds-row[aria-selected=true] .ds-glyph { color: #fff; } .ds-glyph { width: 16px; height: 16px; margin-top: 2px; color: var(--fg-3, #9b9ba2); } .ds-glyph-attn { color: var(--attn, #d8640b); } .ds-glyph-work { color: var(--work, #2e6ddb); animation: ds-pulse 1.6s ease-in-out infinite; } @keyframes ds-pulse { 0%, 100% { opacity: 1; } 50% { opacity: .45; } } .ds-t { display: flex; align-items: baseline; gap: 6px; min-width: 0; } .ds-key { font-family: ui-monospace, 'SF Mono', Menlo, Consolas, monospace; font-size: 11px; color: var(--fg-2, #68686f); flex: none; } .ds-name { font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; } .ds-muted { display: block; font-size: 12px; color: var(--fg-2, #68686f); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; } .ds-wait { display: block; font-size: 12px; color: var(--fg-2, #68686f); font-variant-numeric: tabular-nums; text-align: right; line-height: 19px; } .ds-row-needs .ds-wait { color: var(--attn, #d8640b); font-weight: 600; }"
+    },
+    {
+      "name": "Gate Panel",
+      "kind": "card",
+      "refersTo": "panel",
+      "description": "The open gate: amber-tinted head with a mono gate-ID pill and tabular waiting time, body on the pane, 9px radius, 45% amber border.",
+      "html": "<section class=\"ds-panel ds-panel-attn\"><div class=\"ds-p-head\"><span class=\"ds-gate-id\">G2</span><strong>Plan</strong><span class=\"ds-since\"><svg class=\"ds-ico\" viewBox=\"0 0 16 16\" aria-hidden=\"true\"><circle cx=\"8\" cy=\"8\" r=\"5.5\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.5\"/><path d=\"M8 5v3.2l2 1.3\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.5\" stroke-linecap=\"round\"/></svg>waiting 2h 10m</span></div><div class=\"ds-p-body\"><p class=\"ds-lede\">Add the two partner tools behind the existing MCP router; reuse the validation layer from the client tools. Implement?</p><p class=\"ds-muted\">Three files touched, no migration.</p></div></section>",
+      "css": ".ds-panel { border: 1px solid var(--line, #d9d9de); border-radius: 9px; overflow: clip; background: var(--pane, #fff); font: 400 13px/1.45 -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Helvetica Neue', Helvetica, Arial, sans-serif; color: var(--fg, #1c1c1f); } .ds-panel-attn { border-color: color-mix(in srgb, var(--attn, #d8640b) 45%, var(--line, #d9d9de)); } .ds-p-head { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; padding: 10px 14px; border-bottom: 1px solid var(--line-soft, #e8e8ec); background: var(--list, #f5f5f7); } .ds-panel-attn .ds-p-head { background: var(--attn-bg, #fff1e4); border-bottom-color: color-mix(in srgb, var(--attn, #d8640b) 25%, transparent); } .ds-p-head strong { font-weight: 600; } .ds-gate-id { font-family: ui-monospace, 'SF Mono', Menlo, Consolas, monospace; font-size: 11.5px; font-weight: 700; color: var(--attn-fg, #964300); background: color-mix(in srgb, var(--attn, #d8640b) 18%, transparent); padding: 1px 6px; border-radius: 4px; } .ds-since { margin-left: auto; font-size: 12px; color: var(--attn-fg, #964300); font-variant-numeric: tabular-nums; display: inline-flex; align-items: center; gap: 5px; white-space: nowrap; } .ds-ico { width: 13px; height: 13px; } .ds-p-body { padding: 14px 16px 16px; } .ds-p-body p { margin: 0 0 10px; max-width: 68ch; } .ds-p-body p:last-child { margin-bottom: 0; } .ds-lede { font-size: 13.5px; } .ds-muted { color: var(--fg-2, #68686f); font-size: 12.5px; }"
+    },
+    {
+      "name": "Stage Rail",
+      "kind": "custom",
+      "refersTo": "panel",
+      "description": "One column per pipeline stage with the product's own marks (pending, active, done, skipped) and the one-line note beneath.",
+      "html": "<div class=\"ds-rail\"><div class=\"ds-stage ds-stage-done\"><div class=\"ds-s-top\"><svg class=\"ds-glyph ds-glyph-ok\" viewBox=\"0 0 16 16\" aria-hidden=\"true\"><circle cx=\"8\" cy=\"8\" r=\"6.75\" fill=\"currentColor\"/><path d=\"M5 8.2l2 2 4-4.2\" fill=\"none\" stroke=\"#fff\" stroke-width=\"1.5\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/></svg><span>Plan</span></div><div class=\"ds-s-note\">Two tools, shared validation</div></div><div class=\"ds-stage ds-stage-active\"><div class=\"ds-s-top\"><svg class=\"ds-glyph\" viewBox=\"0 0 16 16\" aria-hidden=\"true\"><circle cx=\"8\" cy=\"8\" r=\"6\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.5\"/><path d=\"M8 3.5a4.5 4.5 0 0 1 0 9z\" fill=\"currentColor\"/></svg><span>Implement</span></div><div class=\"ds-s-note\">Running tests</div></div><div class=\"ds-stage ds-stage-pending\"><div class=\"ds-s-top\"><svg class=\"ds-glyph\" viewBox=\"0 0 16 16\" aria-hidden=\"true\"><circle cx=\"8\" cy=\"8\" r=\"6\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.5\" stroke-dasharray=\"2.6 2.1\" stroke-linecap=\"round\"/></svg><span>Review</span></div></div><div class=\"ds-stage ds-stage-skipped\"><div class=\"ds-s-top\"><svg class=\"ds-glyph ds-glyph-skip\" viewBox=\"0 0 16 16\" aria-hidden=\"true\"><circle cx=\"8\" cy=\"8\" r=\"6\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.5\"/><path d=\"M5.5 8h5\" stroke=\"currentColor\" stroke-width=\"1.5\" stroke-linecap=\"round\"/></svg><span>File PR</span></div><div class=\"ds-s-note\">skipped</div></div></div>",
+      "css": ".ds-rail { display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; border-top: 1px solid var(--line-soft, #e8e8ec); border-bottom: 1px solid var(--line-soft, #e8e8ec); padding: 14px 0 12px; font: 400 13px/1.45 -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Helvetica Neue', Helvetica, Arial, sans-serif; color: var(--fg, #1c1c1f); } .ds-stage { position: relative; padding-right: 10px; min-width: 0; } .ds-stage + .ds-stage { padding-left: 14px; } .ds-stage + .ds-stage::before { content: ''; position: absolute; left: 0; top: 7px; width: 1px; height: 100%; max-height: 42px; background: var(--line-soft, #e8e8ec); } .ds-s-top { display: flex; align-items: center; gap: 6px; font-weight: 500; font-size: 12.5px; } .ds-s-note { margin-top: 3px; font-size: 12px; color: var(--fg-2, #68686f); line-height: 1.35; } .ds-stage-pending .ds-s-top, .ds-stage-skipped .ds-s-top { color: var(--fg-3, #9b9ba2); } .ds-glyph { width: 16px; height: 16px; flex: none; color: var(--fg-3, #9b9ba2); } .ds-glyph-ok { color: var(--ok, #1f8c4d); } .ds-glyph-skip { color: var(--skip, #9b9ba2); }"
+    },
+    {
+      "name": "Notification Card",
+      "kind": "card",
+      "refersTo": "notice-card",
+      "description": "macOS-style notification that brings a run back when its next gate opens. 12px radius, window shadow, slides in from the right.",
+      "html": "<div class=\"ds-notice\"><div class=\"ds-appicon\"><svg viewBox=\"0 0 16 16\" aria-hidden=\"true\"><path d=\"M4 11V7.5a4 4 0 0 1 8 0V11l1 1.2H3z\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.5\" stroke-linejoin=\"round\"/><path d=\"M6.5 14h3\" stroke=\"currentColor\" stroke-width=\"1.5\" stroke-linecap=\"round\"/></svg></div><div><div class=\"ds-nh\"><span>Pipelines</span><span>now</span></div><div class=\"ds-nt\">ALM-512 needs you at G3</div><div class=\"ds-nb\">Visual gate: screenshot on dev data, two compromises listed.</div><div class=\"ds-na\"><button class=\"ds-na-primary\">Reply</button><button class=\"ds-na-btn\">Later</button></div></div></div>",
+      "css": ".ds-notice { width: 340px; display: grid; grid-template-columns: 28px minmax(0, 1fr); gap: 10px; padding: 10px 12px 10px 10px; background: var(--pane, #fff); border: 1px solid var(--line, #d9d9de); border-radius: 12px; box-shadow: 0 1px 2px rgba(20,22,30,.08), 0 18px 48px -18px rgba(20,22,30,.35); animation: ds-slidein .28s cubic-bezier(.2,.8,.2,1); font: 400 13px/1.45 -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Helvetica Neue', Helvetica, Arial, sans-serif; color: var(--fg, #1c1c1f); } @keyframes ds-slidein { from { transform: translateX(24px); opacity: 0; } to { transform: none; opacity: 1; } } .ds-appicon { width: 28px; height: 28px; border-radius: 7px; background: var(--accent, #0a6bf2); display: grid; place-items: center; color: #fff; } .ds-appicon svg { width: 15px; height: 15px; } .ds-nh { display: flex; justify-content: space-between; font-size: 11px; color: var(--fg-2, #68686f); } .ds-nt { font-weight: 600; margin-top: 1px; } .ds-nb { font-size: 12.5px; color: var(--fg-2, #68686f); margin-top: 1px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; } .ds-na { display: flex; gap: 6px; margin-top: 8px; } .ds-na-primary, .ds-na-btn { height: 24px; font: 500 12px/1 inherit; padding: 0 8px; border-radius: 7px; border: 1px solid var(--line, #d9d9de); background: var(--pane, #fff); color: var(--fg, #1c1c1f); cursor: pointer; } .ds-na-primary { background: var(--accent, #0a6bf2); border-color: var(--accent, #0a6bf2); color: #fff; } .ds-na-primary:hover { filter: brightness(.95); } .ds-na-btn:hover { background: var(--sel, #e3e3e8); } .ds-na-primary:focus-visible, .ds-na-btn:focus-visible { outline: 2px solid var(--accent, #0a6bf2); outline-offset: 1px; }"
+    },
+    {
+      "name": "Command Palette",
+      "kind": "custom",
+      "refersTo": "palette",
+      "description": "Cmd+K: a 560px card with a 15px borderless input and glyph-led result rows; jumps to a run or runs a command.",
+      "html": "<div class=\"ds-pal\"><input class=\"ds-pal-input\" type=\"text\" placeholder=\"Jump to a run or run a command\" aria-label=\"Search\"><ul class=\"ds-pal-list\"><li class=\"ds-ph\">Runs</li><li><button class=\"ds-pal-row ds-hl\"><svg class=\"ds-glyph ds-glyph-attn\" viewBox=\"0 0 16 16\" aria-hidden=\"true\"><circle cx=\"8\" cy=\"8\" r=\"6.75\" fill=\"currentColor\"/><path d=\"M8 4.6v4\" stroke=\"#fff\" stroke-width=\"1.5\" stroke-linecap=\"round\"/><circle cx=\"8\" cy=\"11.2\" r=\".95\" fill=\"#fff\"/></svg><span>Partner create/update tools</span><span class=\"ds-pal-key\">ALM-480</span></button></li><li><button class=\"ds-pal-row\"><svg class=\"ds-glyph\" viewBox=\"0 0 16 16\" aria-hidden=\"true\"><circle cx=\"8\" cy=\"8\" r=\"6\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.5\"/><path d=\"M8 4.5V8l2.3 1.6\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.5\" stroke-linecap=\"round\" stroke-linejoin=\"round\"/></svg><span>Utilization CSV download</span><span class=\"ds-pal-key\">ALM-512</span></button></li><li class=\"ds-ph\">Commands</li><li><button class=\"ds-pal-row\"><svg class=\"ds-glyph\" viewBox=\"0 0 16 16\" aria-hidden=\"true\"><path d=\"M13 9.5A5.5 5.5 0 0 1 6.5 3a5.5 5.5 0 1 0 6.5 6.5z\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.5\" stroke-linejoin=\"round\"/></svg><span>Toggle appearance</span><span class=\"ds-trail\">Light / dark</span></button></li></ul></div>",
+      "css": ".ds-pal { width: 560px; max-width: 100%; background: var(--pane, #fff); border: 1px solid var(--line, #d9d9de); border-radius: 12px; box-shadow: 0 1px 2px rgba(20,22,30,.08), 0 18px 48px -18px rgba(20,22,30,.35); overflow: hidden; font: 400 13px/1.45 -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Helvetica Neue', Helvetica, Arial, sans-serif; color: var(--fg, #1c1c1f); } .ds-pal-input { width: 100%; border: 0; border-bottom: 1px solid var(--line-soft, #e8e8ec); background: none; padding: 14px 16px; font: inherit; font-size: 15px; color: inherit; outline: none; } .ds-pal-input::placeholder { color: var(--fg-3, #9b9ba2); } .ds-pal-list { list-style: none; margin: 0; padding: 6px; max-height: 360px; overflow-y: auto; } .ds-pal-row { width: 100%; display: grid; grid-template-columns: 16px minmax(0, 1fr) auto; gap: 10px; align-items: center; text-align: left; padding: 8px 10px; border: 0; border-radius: 7px; background: none; color: inherit; font: inherit; cursor: pointer; } .ds-pal-row:hover, .ds-pal-row.ds-hl { background: var(--sel, #e3e3e8); } .ds-pal-row:focus-visible { outline: 2px solid var(--accent, #0a6bf2); outline-offset: 1px; } .ds-ph { padding: 8px 10px 2px; font-size: 11px; font-weight: 600; letter-spacing: .04em; text-transform: uppercase; color: var(--fg-3, #9b9ba2); } .ds-pal-key { font-family: ui-monospace, 'SF Mono', Menlo, Consolas, monospace; font-size: 11px; color: var(--fg-2, #68686f); } .ds-trail { font-size: 11.5px; color: var(--fg-3, #9b9ba2); } .ds-glyph { width: 16px; height: 16px; color: var(--fg-3, #9b9ba2); } .ds-glyph-attn { color: var(--attn, #d8640b); }"
+    },
+    {
+      "name": "Key Cap",
+      "kind": "chip",
+      "refersTo": "kbd",
+      "description": "Keyboard shortcut cap used in buttons, the search control, and palette trails. Hidden under 760px.",
+      "html": "<span>Search runs <kbd class=\"ds-kbd\">\u2318K</kbd></span>",
+      "css": ".ds-kbd { font: 400 11px/16px -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Helvetica Neue', Helvetica, Arial, sans-serif; color: var(--fg-2, #68686f); background: var(--kbd, #f0f0f3); border: 1px solid var(--line, #d9d9de); border-radius: 4px; padding: 0 5px; }"
+    },
+    {
+      "name": "New Run Sheet",
+      "kind": "custom",
+      "refersTo": "sheet",
+      "description": "Cmd+N: a 540px sheet hung from the title bar. One typed field (a Linear issue combobox) and everything else derived: kind, repository, worktree, and the exact claude command it will run.",
+      "html": "<div class=\"ds-sheet\"><h2 class=\"ds-sheet-h\">New run</h2><form class=\"ds-sheet-form\"><div class=\"ds-f\"><label class=\"ds-lbl\">Task</label><div class=\"ds-pick\"><input class=\"ds-input\" type=\"text\" value=\"ALM-520 Partner pulse digest email\" aria-label=\"Task\"><ul class=\"ds-picker\"><li aria-selected=\"true\"><span class=\"ds-key\">ALM-520</span><span class=\"ds-ttl\">Partner pulse digest email</span><span class=\"ds-meta\">Todo \u00b7 3 pts</span></li><li><span class=\"ds-key\">ALM-466</span><span class=\"ds-ttl\">Deliverable search facets</span><span class=\"ds-meta ds-warn\">PR open</span></li></ul></div><span class=\"ds-sub\">Linear \u00b7 Todo \u00b7 3 pts</span></div><div class=\"ds-f\"><span class=\"ds-lbl\">Kind</span><div class=\"ds-seg\"><button type=\"button\" aria-pressed=\"true\">Feature</button><button type=\"button\" aria-pressed=\"false\">Bug</button></div></div><div class=\"ds-f\"><label class=\"ds-lbl\">Repository</label><select class=\"ds-input\"><option>RoleModel/almanac</option></select></div><div class=\"ds-f\"><span class=\"ds-lbl\">Worktree</span><span class=\"ds-derived\">alm-520-partner-pulse-digest-email</span></div><div class=\"ds-f\"><span class=\"ds-lbl\">Runs</span><code class=\"ds-cmd\">~/work/almanac/alm-520-partner-pulse-digest-email $ <b>claude</b> -p \"/pipeline feature ALM-520 Partner pulse digest email\" --output-format stream-json</code></div><div class=\"ds-f\"><span class=\"ds-lbl\"></span><label class=\"ds-check\"><input type=\"checkbox\">Open in Claude Code when it starts</label></div><div class=\"ds-actions\"><button type=\"button\" class=\"ds-btn\">Cancel</button><button type=\"button\" class=\"ds-btn ds-primary\">Start run <kbd class=\"ds-kbd\">\u2318\u21a9</kbd></button></div></form></div>",
+      "css": ".ds-sheet { width: 540px; max-width: 100%; background: var(--pane, #fff); border: 1px solid var(--line, #d9d9de); border-top: 0; border-radius: 0 0 12px 12px; box-shadow: 0 1px 2px rgba(20,22,30,.08), 0 18px 48px -18px rgba(20,22,30,.35); font: 400 13px/1.45 -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Helvetica Neue', Helvetica, Arial, sans-serif; color: var(--fg, #1c1c1f); } .ds-sheet-h { margin: 0; padding: 14px 18px 11px; font-size: 13px; font-weight: 600; border-bottom: 1px solid var(--line-soft, #e8e8ec); } .ds-sheet-form { padding: 16px 18px; display: flex; flex-direction: column; gap: 12px; } .ds-f { display: grid; grid-template-columns: 92px minmax(0, 1fr); gap: 6px 12px; align-items: center; } .ds-lbl { font-size: 12.5px; color: var(--fg-2, #68686f); text-align: right; } .ds-input { width: 100%; height: 28px; padding: 0 9px; border: 1px solid var(--line, #d9d9de); border-radius: 7px; background: var(--field, #fff); color: inherit; font: inherit; } .ds-input:focus { outline: none; border-color: var(--accent, #0a6bf2); box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent, #0a6bf2) 22%, transparent); } .ds-pick { position: relative; } .ds-picker { position: absolute; left: 0; right: 0; top: calc(100% + 4px); z-index: 2; margin: 0; padding: 4px; list-style: none; background: var(--pane, #fff); border: 1px solid var(--line, #d9d9de); border-radius: 7px; box-shadow: 0 1px 2px rgba(20,22,30,.08), 0 18px 48px -18px rgba(20,22,30,.35); } .ds-picker li { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 8px; align-items: baseline; padding: 6px 8px; border-radius: 5px; font-size: 12.5px; } .ds-picker li[aria-selected=\"true\"], .ds-picker li:hover { background: var(--sel, #e3e3e8); } .ds-key { font-family: ui-monospace, 'SF Mono', Menlo, Consolas, monospace; font-size: 11px; color: var(--fg-2, #68686f); } .ds-ttl { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; } .ds-meta { font-size: 11px; color: var(--fg-3, #9b9ba2); white-space: nowrap; } .ds-meta.ds-warn { color: var(--attn-fg, #964300); } .ds-sub { grid-column: 2; font-size: 11.5px; color: var(--fg-2, #68686f); } .ds-seg { display: inline-flex; justify-self: start; border: 1px solid var(--line, #d9d9de); border-radius: 7px; padding: 2px; background: var(--list, #f5f5f7); } .ds-seg button { border: 0; background: none; padding: 3px 12px; border-radius: 5px; font: inherit; font-size: 12.5px; color: var(--fg-2, #68686f); cursor: pointer; } .ds-seg button[aria-pressed=\"true\"] { background: var(--pane, #fff); color: var(--fg, #1c1c1f); box-shadow: 0 1px 2px rgba(20,22,30,.12); } .ds-derived { font-family: ui-monospace, 'SF Mono', Menlo, Consolas, monospace; font-size: 11.5px; color: var(--fg-2, #68686f); overflow-wrap: anywhere; } .ds-cmd { font-family: ui-monospace, 'SF Mono', Menlo, Consolas, monospace; font-size: 11.5px; line-height: 1.5; color: var(--fg-2, #68686f); background: var(--list, #f5f5f7); border: 1px solid var(--line-soft, #e8e8ec); border-radius: 7px; padding: 6px 9px; overflow-wrap: anywhere; } .ds-cmd b { font-weight: 500; color: var(--fg, #1c1c1f); } .ds-check { display: inline-flex; align-items: center; gap: 7px; font-size: 12.5px; cursor: pointer; } .ds-check input { accent-color: var(--accent, #0a6bf2); margin: 0; width: 14px; height: 14px; } .ds-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 2px; } .ds-btn { display: inline-flex; align-items: center; gap: 7px; height: 28px; padding: 0 10px; border-radius: 7px; border: 1px solid var(--line, #d9d9de); background: var(--pane, #fff); color: var(--fg, #1c1c1f); font: inherit; font-weight: 500; cursor: pointer; } .ds-btn.ds-primary { background: var(--accent, #0a6bf2); border-color: var(--accent, #0a6bf2); color: #fff; } .ds-kbd { font-size: 11px; border: 1px solid transparent; border-radius: 4px; padding: 0 5px; line-height: 16px; background: rgba(255,255,255,.18); color: #fff; } @media (max-width: 760px) { .ds-f { grid-template-columns: minmax(0, 1fr); } .ds-lbl { text-align: left; } .ds-sub { grid-column: 1; } }"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Mail Inbox for Gates",
+    "overview": "Pipelines plays the macOS productivity canon straight, at the craft level of Linear, Raycast, and Apple Mail: a floating window with a unified title bar, a 320px flat list on the left, the selected item on the right, a status bar below. No invented visual world; the system's job is to disappear so the three run states (needs you, working, done) are the only thing with color in the frame. The chosen direction was the category standard, picked by the user over the dealt direction (seed key 389f75b7).\n\nDensity is desktop-tool density: 13px body, 11px captions, 28px controls, 6-16px internal spacing, hairline 1px borders. Color is almost entirely cool neutral; the single blue accent is reserved for selection, focus, and the one primary action, and three semantic hues carry run state with a glyph and a word beside them every time. Depth is conveyed by tonal surface steps (desk, window chrome, list, pane) and one window shadow; nothing inside the window casts a hard shadow.\n\nThe build follows the system appearance with a manual toggle. Light values are normative in the frontmatter; dark values are carried in the sidecar and in the page's two dark :root blocks, token for token.",
+    "keyCharacteristics": [
+      "Cool neutral surfaces stepped by tone, one blue accent, three semantic state hues",
+      "System font stack at 13px; system mono for issue keys, gate IDs, branches, timestamps",
+      "Status always drawn as a 16px glyph plus a word, never by color alone",
+      "Native selection grammar: blue when the list has focus, gray when it does not",
+      "Hairline borders and small radii (4-12px); one shadow for floating surfaces only"
+    ],
+    "rules": [
+      {
+        "name": "The Glyph and Word Rule",
+        "body": "A state is never carried by color alone. Every run state and stage state is a 16px glyph from the sprite (attn, work, done, pending, active, skipped) with its name in text beside it. Color is the third signal, not the first.",
+        "section": "colors"
+      },
+      {
+        "name": "The One Blue Rule",
+        "body": "The accent appears only as selection, focus, link, or the single primary action in view. Working state uses `work`, a distinct blue, so \"selected\" and \"working\" are never confused.",
+        "section": "colors"
+      },
+      {
+        "name": "The Tint Pairing Rule",
+        "body": "Each semantic hue ships as a trio: the hue for glyphs and short text, a dark ink for body text on the tint, and the tint for backgrounds. Never set the raw hue as body text on its own tint.",
+        "section": "colors"
+      },
+      {
+        "name": "The Tabular Time Rule",
+        "body": "Every elapsed time, waiting time, count, and timestamp sets `font-variant-numeric: tabular-nums` so columns of durations align and reflow does not jitter.",
+        "section": "typography"
+      },
+      {
+        "name": "The Key Is Mono Rule",
+        "body": "Anything the pipeline itself names as an identifier (issue key, gate ID, branch, file path, timestamp) is set in the mono face at caption size and secondary ink. Prose is never mono.",
+        "section": "typography"
+      },
+      {
+        "name": "The Floating Only Rule",
+        "body": "Panels, rows, chips, and buttons are flat at rest and on hover; hover is a surface change to `sel`, never a lift. A shadow means the element floats over the window: notification, palette, toast, or the window itself.",
+        "section": "elevation"
+      }
+    ],
+    "dos": [
+      "Do pair every state with a glyph from the sprite and a word; color is the third signal.",
+      "Do keep the accent to selection, focus, links, and one primary button per view; use `work` for working state.",
+      "Do step surfaces tonally (desk > chrome > list > pane in light) and divide with 1px `line` or `line-soft`; reserve the window shadow for floating surfaces.",
+      "Do set every duration, count, and timestamp in tabular numerals, and every pipeline identifier in the mono face at 11-12px.",
+      "Do keep controls at 28px, chips at 26px, radii between 4px and 12px scaled to the element, and body type at 13px.",
+      "Do flip the list selection from `sel` to `accent` only when the list has focus.",
+      "Do define every new color in all three `:root` blocks (light, dark via media query, dark via `data-theme`), and honor `prefers-reduced-motion`."
+    ],
+    "donts": [
+      "Don't carry status by color alone, or introduce a fourth state hue; skipped is tertiary gray on purpose.",
+      "Don't use the accent as a background for working or done surfaces, or as body text on its own tint; use the semantic ink (`attn-fg`) for text on tints.",
+      "Don't add drop shadows, lifts, or transforms to panels, rows, chips, or buttons on hover; hover is a surface change to `sel`.",
+      "Don't introduce a display face, a second sans, or any size above 19px; the title is the top of the ramp.",
+      "Don't use the uppercase section label for anything other than a header over a group of items; it is never a kicker above a title or a tag on a card.",
+      "Don't replace the sprite glyphs with glyph-font characters or emoji; the pipeline's marks are the product vocabulary and the sprite is their only rendering."
+    ]
+  }
+}
