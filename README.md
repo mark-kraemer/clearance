@@ -17,7 +17,7 @@ Runs follow the stages of the `pipeline` plugin (RoleModel/claude-plugins): plan
 | `~/.claude/sessions/<pid>.json` | busy or idle, for live processes only |
 | `~/.claude/projects/<cwd>/<session>.jsonl` | the gate's own text and any pending `AskUserQuestion` |
 
-They can be read but not answered here, because the pending question belongs to the desktop app's interactive process. The composer becomes "Open in Claude Code".
+They can be read but not answered here, because the pending question belongs to the desktop app's interactive process. The composer becomes "Open in Claude Code" (⌘O), which switches the desktop app to that session through its `claude://code/continue?session=<id>` link. ⌃⌥C brings Clearance back from anywhere.
 
 **Owned runs** start from the New Run sheet (⌘N). Clearance creates a worktree under the repository's `.claude/worktrees`, then spawns your signed-in `claude` in auto mode:
 
@@ -42,7 +42,7 @@ pnpm dist        # unsigned Clearance.app in release/
 
 `app/core` holds the pure parsers (store → stages, session → run, transcript → gate, stream-json → gate, ordering) and is the only tested layer. `app/main` is the Electron side: file watching, process spawning, the permission server. `app/renderer` is the UI, ported from the prototype in `clearance.html`.
 
-Dev-only environment variables: `CLEARANCE_SHOT=<png>` captures the window after load and exits, `CLEARANCE_SMOKE_START='{"kind","task","repoPath"}'` starts an owned run at launch, `CLEARANCE_SMOKE_ANSWER='{"id","text","after"}'` answers one, `CLEARANCE_DEBUG=1` echoes the runs' stderr.
+Dev-only environment variables: `CLEARANCE_WIN=1600x1000` sets the window size, `CLEARANCE_SHOT=<png>` captures the window after load and exits, `CLEARANCE_SMOKE_START='{"kind","task","repoPath"}'` starts an owned run at launch, `CLEARANCE_SMOKE_ANSWER='{"id","text","after"}'` answers one, `CLEARANCE_DEBUG=1` echoes the runs' stderr.
 
 ## Design
 

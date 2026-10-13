@@ -48,9 +48,9 @@ describe('reduceStream', () => {
     expect(s.gate).toBeNull();
   });
 
-  it('keeps a newest-first activity feed of texts and tool calls', () => {
+  it('keeps a newest-first feed of what Claude said, leaving tool calls out', () => {
     const s = run([init, text, ask, askResult, bash]);
-    expect(s.activity.map((a) => a.text)).toEqual(['Bash · Run the suite', 'AskUserQuestion · Where does the rollover live?', 'Checked Linear: nothing open. One PR, 3 pts.']);
+    expect(s.activity.map((a) => a.text)).toEqual(['Checked Linear: nothing open. One PR, 3 pts.']);
   });
 
   it('reopens the turn and clears the gate when the user answers', () => {

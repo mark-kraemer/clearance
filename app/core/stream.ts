@@ -72,8 +72,6 @@ export function reduceStream(state: StreamState, raw: unknown, ctx: { now: numbe
       if (b.type === 'text' && b.text?.trim()) {
         next = { ...next, currentText: [next.currentText, b.text.trim()].filter(Boolean).join('\n\n'), activity: push(next, { at: ctx.now, text: clean(b.text) }) };
       } else if (b.type === 'tool_use' && b.name) {
-        const summary = toolSummary(b);
-        next = { ...next, activity: push(next, { at: ctx.now, text: `${b.name} · ${summary}`, live: true }) };
         if (b.name === 'AskUserQuestion' && b.id) {
           const questions = ((b.input?.questions as GateQuestion[] | undefined) || []).map((q) => ({ question: q.question, header: q.header, multiSelect: !!q.multiSelect, options: (q.options || []).map((o) => ({ label: o.label, description: o.description })) }));
           const id = inferGateId(next.currentText + ' ' + questions.map((q) => q.question).join(' '), ctx.activeStage);
@@ -99,10 +97,4 @@ export function reduceStream(state: StreamState, raw: unknown, ctx: { now: numbe
     return { ...state, turnOpen: false, gate: null };
   }
   return state;
-}
-
-function toolSummary(b: Block): string {
-  const i = b.input || {};
-  const s = (i.description || i.summary || i.file_path || i.command || i.query || i.skill || (Array.isArray(i.questions) ? (i.questions[0] as { question?: string })?.question : '') || '') as string;
-  return clean(String(s)) || '…';
 }

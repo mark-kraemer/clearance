@@ -91,7 +91,7 @@ export function gateFromTranscript(lines: unknown[], ctx: GateContext): Gate | n
   return { id, name: GATE_NAME[id], since: at(last), summary: questionLine(textOf) || ctx.needsAction || 'Waiting on you', text: textOf };
 }
 
-/** The latest main-chain events as one-line activity, newest first. */
+/** The latest things Claude said on the main chain, newest first. Tool calls are not activity the user reads. */
 export function activityFromTranscript(lines: unknown[], limit = 8): Activity[] {
   const out: Activity[] = [];
   const main = lines.map(asLine).filter((l): l is Line => !!l && !l.isSidechain && l.type === 'assistant');
@@ -99,17 +99,10 @@ export function activityFromTranscript(lines: unknown[], limit = 8): Activity[] 
     const l = main[i];
     for (const b of blocksOf(l).reverse()) {
       if (out.length >= limit) break;
-      if (b.type === 'tool_use' && b.name) out.push({ at: at(l), text: `${b.name} · ${toolSummary(b)}` });
-      else if (b.type === 'text' && b.text?.trim()) out.push({ at: at(l), text: firstLine(b.text) });
+      if (b.type === 'text' && b.text?.trim()) out.push({ at: at(l), text: firstLine(b.text) });
     }
   }
   return out;
-}
-
-function toolSummary(b: Block): string {
-  const i = b.input || {};
-  const s = (i.description || i.summary || i.file_path || i.command || i.query || i.skill || (Array.isArray(i.questions) ? (i.questions[0] as { question?: string })?.question : '') || '') as string;
-  return firstLine(String(s)) || '…';
 }
 
 function firstLine(s: string): string {

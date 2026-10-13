@@ -1,6 +1,6 @@
 import { execFile } from 'node:child_process';
 import { join } from 'node:path';
-import { BrowserWindow, Notification, app, ipcMain, nativeTheme, shell } from 'electron';
+import { BrowserWindow, Notification, app, globalShortcut, ipcMain, nativeTheme, shell } from 'electron';
 
 import { groupRuns } from '../core/order';
 import type { Run } from '../core/types';
@@ -59,9 +59,10 @@ function showWindow(): void {
 }
 
 function createWindow(): void {
+  const [w, h] = (process.env.CLEARANCE_WIN || '1180x760').split('x').map(Number);
   win = new BrowserWindow({
-    width: 1180,
-    height: 760,
+    width: w,
+    height: h,
     minWidth: 760,
     minHeight: 480,
     titleBarStyle: 'hiddenInset',
@@ -98,10 +99,24 @@ function createWindow(): void {
 
 ipcMain.handle('ready', () => allRuns());
 ipcMain.handle('badge', (_e, n: number) => app.dock?.setBadge(n ? String(n) : ''));
-ipcMain.handle('open-in-claude', (_e, id: string) => {
-  // No deep link into a session is documented, so this brings the app forward.
+// The desktop app registers `claude://` and its dock menu builds
+// `code/continue?session=<local_…>` links from its own session ids, which are
+// the host ids the session files carry. An owned run has no desktop session,
+// so the best jump for it is its worktree.
+const HOST_ID = /^local_[A-Za-z0-9-]{1,64}$/;
+ipcMain.handle('open-in-claude', async (_e, id: string) => {
+  const run = allRuns().find((r) => r.id === id);
+  if (run?.hostSessionId && HOST_ID.test(run.hostSessionId)) {
+    const url = `claude://code/${run.gate ? 'needs-input' : 'continue'}?session=${run.hostSessionId}&source=clearance`;
+    await shell.openExternal(url);
+    return { kind: 'session', url };
+  }
+  if (run?.cwd) {
+    shell.showItemInFolder(run.cwd);
+    return { kind: 'worktree' };
+  }
   execFile('open', ['-a', 'Claude'], () => undefined);
-  return allRuns().find((r) => r.id === id)?.hostSessionId ?? null;
+  return { kind: 'app' };
 });
 ipcMain.handle('answer', (_e, id: string, text: string, answers?: Record<string, string>) => owned.answer(id, text, answers));
 ipcMain.handle('permission', (_e, id: string, requestId: string, allow: boolean) => owned.decidePermission(id, requestId, allow));
@@ -111,6 +126,8 @@ ipcMain.handle('list-repos', () => listRepos());
 
 app.whenReady().then(async () => {
   createWindow();
+  // Jump back from anywhere, Claude Code included.
+  globalShortcut.register('Control+Option+C', showWindow);
   ensureTray(showWindow, () => { showWindow(); win?.webContents.send('notice', { kind: 'new-run' }); }, () => app.quit());
   observed.on('runs', publish);
   observed.on('error', (err) => console.error('[observed]', err));
@@ -139,6 +156,7 @@ app.whenReady().then(async () => {
 app.on('window-all-closed', () => {
   // A control room keeps watching from the dock; closing the window does not quit.
 });
+app.on('will-quit', () => globalShortcut.unregisterAll());
 app.on('before-quit', () => {
   void observed.stop();
   owned.shutdown();

@@ -39,10 +39,12 @@
     },
     "files": [
       "dist/**/*",
-      "package.json"
+      "package.json",
+      "build/trayTemplate*.png"
     ],
     "mac": {
       "category": "public.app-category.developer-tools",
+      "icon": "build/icon.icns",
       "target": [
         "dir"
       ],

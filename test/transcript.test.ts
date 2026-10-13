@@ -67,13 +67,12 @@ describe('gateFromTranscript', () => {
 });
 
 describe('activityFromTranscript', () => {
-  it('lists the latest main-chain tool calls and texts, newest first, as one line each', () => {
+  it('lists only what Claude said on the main chain, newest first, one line each; tool calls and subagents are left out', () => {
     const items = activityFromTranscript([askText, askTool, askResult, bashTool, sidechain, reportText], 3);
     expect(items.map((i) => i.text)).toEqual([
       'Committed as 5c12d9a. Nothing was pushed.',
-      'Bash · Run the tests',
-      'AskUserQuestion · What should this session deliver?',
+      'Interview answered. Two questions before I write PRODUCT.md.',
     ]);
-    expect(items[1].at).toBe(Date.parse(t2));
+    expect(items[1].at).toBe(Date.parse(t0));
   });
 });

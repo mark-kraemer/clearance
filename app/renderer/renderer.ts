@@ -8,7 +8,7 @@ interface Api {
   onRuns(cb: (runs: Run[]) => void): () => void;
   onNotice(cb: (n: { kind: string; id?: string }) => void): () => void;
   ready(): Promise<Run[]>;
-  openInClaude(id: string): Promise<string | null>;
+  openInClaude(id: string): Promise<{ kind: 'session' | 'worktree' | 'app' }>;
   answer(id: string, text: string, answers?: Record<string, string>): Promise<{ ok: boolean; error?: string }>;
   decidePermission(id: string, requestId: string, allow: boolean): Promise<{ ok: boolean; error?: string }>;
   startRun(input: { kind: RunKind; task: string; repoPath: string }): Promise<{ ok: boolean; id?: string; error?: string }>;
@@ -223,7 +223,7 @@ function renderDetail(): void {
     <button class="btn d-back" data-back>${icon('back')}Runs</button>
     <div class="d-head">
       <div class="grow"><span class="key">${esc(r.key)}</span><h1>${esc(r.title)}</h1><div class="meta">${meta}</div></div>
-      <div class="actions"><button class="btn" data-open>${icon('open')}Open in Claude Code <kbd>⌘O</kbd></button></div>
+      <div class="actions"><button class="btn" data-open>${icon('open')}${r.source === 'owned' ? 'Reveal worktree' : 'Open in Claude Code'} <kbd>⌘O</kbd></button></div>
     </div>
     <div class="rail" aria-label="Stages">${rail}</div>
     ${panel}
@@ -337,7 +337,7 @@ $('detail').addEventListener('click', async (e) => {
     document.querySelector<HTMLTextAreaElement>('#answer')?.focus();
     return;
   }
-  if (t.closest('[data-open]')) { await api.openInClaude(r.id); toast(`Opening ${r.key || r.title} in Claude Code`); return; }
+  if (t.closest('[data-open]')) { const res = await api.openInClaude(r.id); toast(res.kind === 'session' ? `Switching to ${r.key || r.title} in Claude Code` : res.kind === 'worktree' ? 'Revealed the worktree in Finder' : 'Opened Claude'); return; }
   if (t.closest('[data-back]')) { select(null); return; }
   if (t.closest('[data-nudge]')) { toast('Sending between gates is on the way; open the run in Claude Code for now.'); return; }
   const perm = t.closest<HTMLElement>('[data-perm]');
@@ -391,7 +391,7 @@ document.addEventListener('keydown', (e) => {
   if (mod && e.key === 'k') { e.preventDefault(); openPalette(); return; }
   if (mod && e.key === 'n') { e.preventDefault(); void openSheet(); return; }
   if (!$('sheet').hidden) return;
-  if (mod && e.key === 'o') { e.preventDefault(); if (selectedId) { void api.openInClaude(selectedId); toast('Opening in Claude Code'); } return; }
+  if (mod && e.key === 'o') { e.preventDefault(); if (selectedId) { void api.openInClaude(selectedId); } return; }
   if (mod && /^[1-9]$/.test(e.key)) {
     const r = grouped().flat[Number(e.key) - 1];
     if (r) { e.preventDefault(); select(r.id, { focusComposer: r.source === 'owned' && !!r.gate, focusList: !(r.source === 'owned' && r.gate) }); }
@@ -492,7 +492,7 @@ function runPal(i: number): void {
   else if (it.id === 'new') void openSheet();
   else if (it.id === 'next') { const r = grouped().needs[0]; if (r) select(r.id, { focusList: true }); else toast('Nothing is waiting on you'); }
   else if (it.id === 'theme') toggleTheme();
-  else if (it.id === 'open') { if (selectedId) { void api.openInClaude(selectedId); toast('Opening in Claude Code'); } else toast('Select a run first'); }
+  else if (it.id === 'open') { if (selectedId) void api.openInClaude(selectedId); else toast('Select a run first'); }
   else if (it.id === 'unhide') { hidden.clear(); try { localStorage.removeItem('clearance-hidden'); } catch { /* ignore */ } render(); }
 }
 function openPalette(): void { palIndex = 0; $('palette').hidden = false; ($('pal-input') as HTMLInputElement).value = ''; renderPalette(); $('pal-input').focus(); }

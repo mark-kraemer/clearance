@@ -1,20 +1,23 @@
-import { Menu, Tray, nativeImage } from 'electron';
+import { join } from 'node:path';
+
+import { Menu, Tray, app, nativeImage } from 'electron';
 
 import type { Run } from '../core/types';
 
 // A menu-bar item with the needs-you count, so the board is one click away
-// when the window is behind other apps. The icon is drawn, not loaded: a
-// 16pt template circle with a dot, which macOS tints for light and dark.
+// when the window is behind other apps. The icon is the app mark on the 16pt
+// status-glyph grid, shipped as build/trayTemplate.png (with an @2x sibling
+// Electron picks up by name) and marked as a template so macOS tints it for
+// light and dark menu bars.
 let tray: Tray | null = null;
 
-function iconDataUrl(): string {
-  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 16 16"><circle cx="8" cy="8" r="6" fill="none" stroke="#000" stroke-width="1.6"/><circle cx="8" cy="8" r="2" fill="#000"/></svg>`;
-  return 'data:image/svg+xml;base64,' + Buffer.from(svg).toString('base64');
+function iconPath(): string {
+  return join(app.getAppPath(), 'build', 'trayTemplate.png');
 }
 
 export function ensureTray(onOpen: () => void, onNewRun: () => void, onQuit: () => void): void {
   if (tray) return;
-  const img = nativeImage.createFromDataURL(iconDataUrl()).resize({ width: 16, height: 16 });
+  const img = nativeImage.createFromPath(iconPath());
   img.setTemplateImage(true);
   tray = new Tray(img);
   tray.setToolTip('Clearance');
