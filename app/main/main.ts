@@ -11,7 +11,8 @@ import { ObservedSources } from './sources';
 
 let win: BrowserWindow | null = null;
 const observed = new ObservedSources();
-const owned = new OwnedRuns(join(__dirname, 'permission-server.mjs'));
+// Inside a packaged app the server script must be a real file, so it is unpacked from the asar.
+const owned = new OwnedRuns(join(__dirname, 'permission-server.mjs').replace('app.asar', 'app.asar.unpacked'));
 owned.useStore((id) => observed.storeEntry(id));
 owned.on('log', (line: string) => { if (process.env.CLEARANCE_DEBUG) console.log(line); });
 const seenGates = new Map<string, number>();

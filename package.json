@@ -9,7 +9,9 @@
     "build": "node scripts/build.mjs",
     "start": "pnpm build && electron .",
     "test": "vitest run",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "dist": "pnpm build && electron-builder --mac --dir",
+    "dist:dmg": "pnpm build && electron-builder --mac dmg"
   },
   "license": "UNLICENSED",
   "devDependencies": {
@@ -27,6 +29,30 @@
     "onlyBuiltDependencies": [
       "electron",
       "esbuild"
+    ]
+  },
+  "build": {
+    "appId": "com.rolemodel.clearance",
+    "productName": "Clearance",
+    "directories": {
+      "output": "release"
+    },
+    "files": [
+      "dist/**/*",
+      "package.json"
+    ],
+    "mac": {
+      "category": "public.app-category.developer-tools",
+      "target": [
+        "dir"
+      ],
+      "identity": null,
+      "darkModeSupport": true
+    },
+    "asar": true,
+    "asarUnpack": [
+      "dist/permission-server.mjs",
+      "dist/permission-server.mjs.map"
     ]
   }
 }
