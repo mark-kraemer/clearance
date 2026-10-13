@@ -1,4 +1,5 @@
 import { groupRuns } from '../core/order';
+import { slug } from '../core/slug';
 import type { Gate, Run, RunKind, Stage } from '../core/types';
 
 // The page is the prototype's UI fed by the main process. All reads of the
@@ -11,10 +12,9 @@ interface Api {
   openInClaude(id: string): Promise<{ kind: 'session' | 'worktree' | 'app' }>;
   answer(id: string, text: string, answers?: Record<string, string>): Promise<{ ok: boolean; error?: string }>;
   decidePermission(id: string, requestId: string, allow: boolean): Promise<{ ok: boolean; error?: string }>;
-  startRun(input: { kind: RunKind; task: string; repoPath: string }): Promise<{ ok: boolean; id?: string; error?: string }>;
+  startRun(input: { kind: RunKind; task: string; repoPath: string; baseBranch?: string }): Promise<{ ok: boolean; id?: string; error?: string }>;
   clearRun(id: string): Promise<{ ok: boolean }>;
   listRepos(): Promise<{ path: string; label: string; baseBranch: string }[]>;
-  setBadge(n: number): Promise<void>;
 }
 declare global {
   interface Window {
@@ -31,6 +31,8 @@ const STAGE_CLS: Record<Stage['status'], string> = { pending: '', active: 'work'
 
 let runs: Run[] = [];
 let selectedId: string | null = null;
+// A run asked for before the list carried it (a notification click on a fresh window).
+let pendingFocus: string | null = null;
 let drafts: Record<string, { text: string; answers: Record<string, string> }> = {};
 let hidden = new Set<string>();
 try {
@@ -57,13 +59,14 @@ const clock = (at: number) => {
   return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
 };
 const activeStage = (r: Run) => r.stages.find((s) => s.status === 'active') || r.stages[r.stages.length - 1];
+const prPath = (url: string) => url.replace(/^https:\/\/github\.com\//, '');
 
 /* Markdown: the subset Claude writes at a gate. */
 function inline(s: string): string {
   return esc(s)
     .replace(/`([^`]+)`/g, '<code>$1</code>')
     .replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>')
-    .replace(/(^|[^*])\*([^*\n]+)\*/g, '$1<em>$2</em>')
+    .replace(/(^|\s)\*(\S(?:[^*\n]*?\S)?)\*(?=[\s.,;:!?)]|$)/g, '$1<em>$2</em>')
     .replace(/\[([^\]]+)\]\((https?:[^)\s]+)\)/g, '<a href="$2" target="_blank" rel="noopener">$1</a>')
     .replace(/(^|\s)(https?:\/\/[^\s<]+)/g, '$1<a href="$2" target="_blank" rel="noopener">$2</a>');
 }
@@ -177,7 +180,7 @@ function renderList(): void {
         trail = `<span class="wait">${fmtDur(Date.now() - r.lastActivity)} ago</span>`;
       } else {
         glyph = icon(r.done?.label === 'Stopped' ? 'skipped' : 'done', r.done?.label === 'Stopped' ? 'skip' : 'ok');
-        sub = r.pr ? `${r.done?.label || 'Done'} · ${esc(r.pr.url.replace(/^https:\/\/github\.com\//, ''))}` : `${r.done?.label || 'Done'} · ${esc(r.kind || 'run')}`;
+        sub = r.pr ? `${r.done?.label || 'Done'} · <code>${esc(prPath(r.pr.url))}</code>` : `${r.done?.label || 'Done'} · ${esc(r.kind || 'run')}`;
         trail = `<span class="wait">${fmtDur(Date.now() - (r.done?.when || r.lastActivity))} ago</span>`;
       }
       html += `<button class="row ${r.status}" role="option" data-id="${esc(r.id)}" aria-selected="${r.id === selectedId}" tabindex="${r.id === selectedId ? 0 : -1}">
@@ -215,7 +218,7 @@ function renderDetail(): void {
   const meta = [
     `<span class="badge kind">${r.kind || 'run'}</span>`,
     r.branch ? `<span>${icon('branch')}<code>${esc(r.branch)}</code></span>` : '',
-    r.pr ? `<span>${icon('pr')}<a href="${esc(r.pr.url)}" target="_blank" rel="noopener">${esc(r.pr.url.replace(/^https:\/\/github\.com\//, ''))}</a> · ${esc(r.pr.state.toLowerCase())}</span>` : '',
+    r.pr ? `<span>${icon('pr')}<a href="${esc(r.pr.url)}" target="_blank" rel="noopener"><code>${esc(prPath(r.pr.url))}</code></a> · ${esc(r.pr.state.toLowerCase())}</span>` : '',
     `<span>${icon('clock')}started ${fmtDur(Date.now() - r.started)} ago</span>`,
     `<span>${r.source === 'owned' ? 'started here' : 'from Claude Code'}</span>`,
   ].filter(Boolean).join('');
@@ -242,7 +245,7 @@ function gatePanel(r: Run, g: Gate): string {
   } else {
     body = `<div class="md">${markdown(g.text || g.summary)}</div>`;
     if (g.questions?.length) {
-      body += `<div class="qs">${g.questions.map((q, qi) => `<div class="q"><div class="qh">${esc(q.header || `Question ${qi + 1}`)}</div><div class="qt">${esc(q.question)}</div><div class="opts">${q.options.map((o) => `<button class="chip ${draft.answers[q.question] === o.label ? 'on' : ''}" data-q="${esc(q.question)}" data-opt="${esc(o.label)}" ${owned ? '' : 'disabled'} title="${esc(o.description || '')}">${esc(o.label)}</button>`).join('')}</div>${q.options.find((o) => o.label === draft.answers[q.question])?.description ? `<span class="od">${esc(q.options.find((o) => o.label === draft.answers[q.question])!.description)}</span>` : ''}</div>`).join('')}</div>`;
+      body += `<div class="qs">${g.questions.map((q, qi) => `<div class="q"><div class="qt">${esc(q.question)}</div><div class="qh">${esc(q.header || `Question ${qi + 1}`)}</div><div class="opts">${q.options.map((o) => `<button class="chip ${draft.answers[q.question] === o.label ? 'on' : ''}" data-q="${esc(q.question)}" data-opt="${esc(o.label)}" ${owned ? '' : 'disabled'} title="${esc(o.description || '')}">${esc(o.label)}</button>`).join('')}</div>${q.options.find((o) => o.label === draft.answers[q.question])?.description ? `<span class="od">${esc(q.options.find((o) => o.label === draft.answers[q.question])!.description)}</span>` : ''}</div>`).join('')}</div>`;
     }
   }
   let composer: string;
@@ -274,7 +277,7 @@ function donePanel(r: Run): string {
   const stopped = r.done?.label === 'Stopped';
   return `<section class="panel" aria-label="Result">
     <div class="p-head">${icon(stopped ? 'skipped' : 'done', stopped ? 'skip' : 'ok')}<strong>${esc(r.done?.label || 'Done')}</strong><span class="since">${fmtDur(Date.now() - (r.done?.when || r.lastActivity))} ago</span></div>
-    <div class="p-body"><p>${r.done?.text ? inline(r.done.text) : 'Every stage closed.'}</p>${r.pr ? `<p><a href="${esc(r.pr.url)}" target="_blank" rel="noopener">${esc(r.pr.url.replace(/^https:\/\/github\.com\//, ''))}</a></p>` : ''}</div>
+    <div class="p-body"><p>${r.done?.text ? inline(r.done.text) : 'Every stage closed.'}</p>${r.pr ? `<p><a href="${esc(r.pr.url)}" target="_blank" rel="noopener"><code>${esc(prPath(r.pr.url))}</code></a></p>` : ''}</div>
     <div class="p-foot"><span>${stopped ? 'Open it in Claude Code to continue.' : 'Every stage closed.'}</span><button class="btn" data-hide>${r.source === 'owned' ? 'Clear from board' : 'Hide from board'}</button></div>
   </section>`;
 }
@@ -339,7 +342,6 @@ $('detail').addEventListener('click', async (e) => {
   }
   if (t.closest('[data-open]')) { const res = await api.openInClaude(r.id); toast(res.kind === 'session' ? `Switching to ${r.key || r.title} in Claude Code` : res.kind === 'worktree' ? 'Revealed the worktree in Finder' : 'Opened Claude'); return; }
   if (t.closest('[data-back]')) { select(null); return; }
-  if (t.closest('[data-nudge]')) { toast('Sending between gates is on the way; open the run in Claude Code for now.'); return; }
   const perm = t.closest<HTMLElement>('[data-perm]');
   if (perm && r.gate?.permission) {
     const res = await api.decidePermission(r.id, r.gate.permission.requestId, perm.dataset.perm === 'allow');
@@ -403,7 +405,6 @@ document.addEventListener('keydown', (e) => {
 /* New run sheet */
 let nrKind: RunKind = 'feature';
 let repos: { path: string; label: string; baseBranch: string }[] = [];
-const slug = (t: string) => t.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 48).replace(/-+$/g, '');
 function updateDerived(): void {
   const raw = ($('nr-task') as HTMLInputElement).value.trim();
   const branch = slug(raw);
@@ -434,7 +435,7 @@ async function startRun(): Promise<void> {
   if (!task) { err.textContent = 'Name the task. Put the issue ID first when there is one.'; err.hidden = false; $('nr-task').focus(); return; }
   if (!repoPath) { err.textContent = 'No repository to start in. Make a worktree in Claude Code once and it appears here.'; err.hidden = false; return; }
   ($('nr-start') as HTMLButtonElement).disabled = true;
-  const res = await api.startRun({ kind: nrKind, task, repoPath });
+  const res = await api.startRun({ kind: nrKind, task, repoPath, baseBranch: repos.find((r) => r.path === repoPath)?.baseBranch });
   ($('nr-start') as HTMLButtonElement).disabled = false;
   if (!res.ok) { err.textContent = res.error || 'Could not start the run.'; err.hidden = false; return; }
   closeSheet();
@@ -526,6 +527,12 @@ themeIcon();
 function applyRuns(next: Run[]): void {
   const previouslySelected = selectedId;
   runs = next;
+  if (pendingFocus && byId(pendingFocus)) {
+    const id = pendingFocus;
+    pendingFocus = null;
+    select(id, { focusComposer: byId(id)?.source === 'owned', focusList: byId(id)?.source !== 'owned' });
+    return;
+  }
   if (!selectedId || !byId(selectedId)) {
     const first = grouped().flat[0];
     selectedId = first ? first.id : null;
@@ -537,7 +544,10 @@ function applyRuns(next: Run[]): void {
 }
 api.onRuns(applyRuns);
 api.onNotice((n) => {
-  if (n.kind === 'focus-run' && n.id) select(n.id, { focusComposer: byId(n.id)?.source === 'owned', focusList: byId(n.id)?.source !== 'owned' });
+  if (n.kind === 'focus-run' && n.id) {
+    if (byId(n.id)) select(n.id, { focusComposer: byId(n.id)?.source === 'owned', focusList: byId(n.id)?.source !== 'owned' });
+    else pendingFocus = n.id;
+  }
   if (n.kind === 'new-run') void openSheet();
 });
 void api.ready().then(applyRuns);

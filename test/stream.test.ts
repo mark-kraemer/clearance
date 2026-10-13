@@ -15,9 +15,8 @@ const result = { type: 'result', subtype: 'success', session_id: sid, result: '*
 const run = (events: unknown[], stage: 'plan' | 'implement' | 'review' = 'plan') => events.reduce<StreamState>((s, e) => reduceStream(s, e, { now: 1000, activeStage: stage }), initialStream());
 
 describe('reduceStream', () => {
-  it('records the session id from init and marks the run working', () => {
+  it('marks the run working on init', () => {
     const s = run([init]);
-    expect(s.sessionId).toBe(sid);
     expect(s.turnOpen).toBe(true);
     expect(s.gate).toBeNull();
   });

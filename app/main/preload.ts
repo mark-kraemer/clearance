@@ -20,5 +20,4 @@ contextBridge.exposeInMainWorld('clearance', {
   startRun: (input: unknown) => ipcRenderer.invoke('start-run', input),
   clearRun: (id: string) => ipcRenderer.invoke('clear-run', id),
   listRepos: () => ipcRenderer.invoke('list-repos'),
-  setBadge: (n: number) => ipcRenderer.invoke('badge', n),
 });

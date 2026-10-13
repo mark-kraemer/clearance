@@ -27,6 +27,7 @@ interface Cached<T> {
 export class ObservedSources extends EventEmitter {
   private store = new Map<string, StoreEntry>();
   private sessions = new Map<string, Cached<SessionFile>>();
+  private sessionFiles = new Map<string, Cached<SessionFile>>();
   private registry = new Map<string, RegistryEntry>();
   private transcripts = new Map<string, Cached<unknown[]>>();
   private watchers: FSWatcher[] = [];
@@ -152,22 +153,21 @@ export class ObservedSources extends EventEmitter {
         }
       }
     }
-    const byPath = new Map<string, Cached<SessionFile>>();
-    for (const [, c] of this.sessions) byPath.set((c.value as SessionFile & { __path?: string }).__path || '', c);
     for (const path of files) {
       try {
         const st = await stat(path);
-        const prev = byPath.get(path);
+        const prev = this.sessionFiles.get(path);
         let cached = prev && prev.mtimeMs === st.mtimeMs && prev.size === st.size ? prev : null;
         if (!cached) {
           const raw = JSON.parse(await readFile(path, 'utf8')) as SessionFile;
-          const value: SessionFile & { __path?: string } = {
+          const value: SessionFile = {
             sessionId: raw.sessionId, cliSessionId: raw.cliSessionId, cwd: raw.cwd, originCwd: raw.originCwd, worktreePath: raw.worktreePath,
             worktreeName: raw.worktreeName, branch: raw.branch, createdAt: raw.createdAt, lastActivityAt: raw.lastActivityAt, title: raw.title,
-            isArchived: raw.isArchived, prs: raw.prs, postTurnSummary: raw.postTurnSummary, __path: path,
+            isArchived: raw.isArchived, prs: raw.prs, postTurnSummary: raw.postTurnSummary,
           };
           cached = { mtimeMs: st.mtimeMs, size: st.size, value };
         }
+        this.sessionFiles.set(path, cached);
         if (cached.value.cliSessionId) {
           this.sessions.set(cached.value.cliSessionId, cached);
           seen.add(cached.value.cliSessionId);
@@ -177,6 +177,7 @@ export class ObservedSources extends EventEmitter {
       }
     }
     for (const id of [...this.sessions.keys()]) if (!seen.has(id)) this.sessions.delete(id);
+    for (const path of [...this.sessionFiles.keys()]) if (!files.includes(path)) this.sessionFiles.delete(path);
   }
 
   private async loadTranscript(id: string, cwd: string): Promise<unknown[]> {

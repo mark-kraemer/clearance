@@ -54,8 +54,13 @@ export function inferGateId(text: string, stage: StageId | null): GateId {
   return 'Q';
 }
 
+/** AskUserQuestion input as the gate carries it. */
+export function normalizeQuestions(raw: unknown): GateQuestion[] {
+  return (Array.isArray(raw) ? (raw as GateQuestion[]) : []).map((q) => ({ question: q.question, header: q.header, multiSelect: !!q.multiSelect, options: (q.options || []).map((o) => ({ label: o.label, description: o.description })) }));
+}
+
 /** The last line of the text that ends in a question mark, for a one-line summary. */
-function questionLine(text: string): string {
+export function questionLine(text: string): string {
   const lines = text.split('\n').map((l) => l.replace(/[*_`#>]/g, '').trim()).filter(Boolean);
   for (let i = lines.length - 1; i >= 0; i--) if (lines[i].endsWith('?')) return lines[i].slice(0, 160);
   return '';
@@ -81,7 +86,7 @@ export function gateFromTranscript(lines: unknown[], ctx: GateContext): Gate | n
   const pending = group.flatMap((l) => blocksOf(l).filter((b) => b.type === 'tool_use' && b.name === 'AskUserQuestion' && b.id && !answered.has(b.id)).map((b) => ({ b, l })));
   if (pending.length) {
     const { b, l } = pending[pending.length - 1];
-    const questions = ((b.input?.questions as GateQuestion[] | undefined) || []).map((q) => ({ question: q.question, header: q.header, multiSelect: !!q.multiSelect, options: (q.options || []).map((o) => ({ label: o.label, description: o.description })) }));
+    const questions = normalizeQuestions(b.input?.questions);
     const id = inferGateId(textOf + ' ' + questions.map((q) => q.question).join(' '), ctx.activeStage);
     return { id, name: GATE_NAME[id], since: at(l), summary: questions[0]?.question || ctx.needsAction || 'Question', text: textOf, questions, toolUseId: b.id };
   }
@@ -105,7 +110,8 @@ export function activityFromTranscript(lines: unknown[], limit = 8): Activity[] 
   return out;
 }
 
-function firstLine(s: string): string {
+/** The first non-empty line, markdown marks stripped, clipped to 140 chars. */
+export function firstLine(s: string): string {
   const line = s.split('\n').map((x) => x.replace(/[*_`#>]/g, '').trim()).find(Boolean) || '';
   return line.length > 140 ? line.slice(0, 139) + '…' : line;
 }

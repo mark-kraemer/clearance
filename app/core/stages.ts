@@ -11,6 +11,17 @@ const LABEL: Record<StageId, string> = {
 };
 
 const STAGE_IDS = new Set<string>(Object.keys(LABEL));
+
+/** The board's label for a stage; a bug run's implement stage is "Fix". */
+export function stageLabel(id: StageId, kind: RunKind): string {
+  return id === 'implement' && kind === 'bug' ? 'Fix' : LABEL[id];
+}
+
+/** The stage ids in pipeline order for a run kind. */
+export function stageOrder(kind: RunKind): StageId[] {
+  const all: StageId[] = ['plan', 'implement', 'review', 'pr', 'feedback'];
+  return kind === 'bug' ? all.filter((s) => s !== 'plan') : all;
+}
 const STATUSES = new Set<string>(['pending', 'active', 'done', 'skipped']);
 
 /** Reads one session's run out of the pipeline plugin's store file. */
@@ -27,7 +38,7 @@ export function stagesFromStore(store: unknown, cliSessionId: string): StoreEntr
         .map((s) => {
           const id = s.id as StageId;
           const status = STATUSES.has(String(s.status)) ? (s.status as StageStatus) : 'pending';
-          const label = id === 'implement' && kind === 'bug' ? 'Fix' : LABEL[id];
+          const label = stageLabel(id, kind);
           return { id, label, status, note: typeof s.note === 'string' ? s.note : '' };
         })
     : [];

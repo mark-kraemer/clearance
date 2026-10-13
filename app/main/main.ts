@@ -16,6 +16,8 @@ const owned = new OwnedRuns(join(__dirname, 'permission-server.mjs').replace('ap
 owned.useStore((id) => observed.storeEntry(id));
 owned.on('log', (line: string) => { if (process.env.CLEARANCE_DEBUG) console.log(line); });
 const seenGates = new Map<string, number>();
+// The first publish that carries observed runs is launch state, not news.
+let observedLoaded = false;
 
 function allRuns(): Run[] {
   // An owned run is also a desktop-visible session once it starts, so the
@@ -33,14 +35,11 @@ function publish(): void {
   for (const r of runs) {
     if (r.gate && seenGates.get(r.id) !== r.gate.since) {
       seenGates.set(r.id, r.gate.since);
-      // The first publish after launch should not fire a burst of toasts.
-      if (seenGates.size > 0 && Date.now() - r.gate.since < 10 * 60 * 1000 && app.isReady() && !firstPublish) notifyGate(r);
+      if (observedLoaded && Date.now() - r.gate.since < 10 * 60 * 1000) notifyGate(r);
     }
     if (!r.gate) seenGates.delete(r.id);
   }
-  firstPublish = false;
 }
-let firstPublish = true;
 
 function notifyGate(r: Run): void {
   if (!Notification.isSupported() || !r.gate) return;
@@ -98,7 +97,6 @@ function createWindow(): void {
 }
 
 ipcMain.handle('ready', () => allRuns());
-ipcMain.handle('badge', (_e, n: number) => app.dock?.setBadge(n ? String(n) : ''));
 // The desktop app registers `claude://` and its dock menu builds
 // `code/continue?session=<local_…>` links from its own session ids, which are
 // the host ids the session files carry. An owned run has no desktop session,
@@ -107,7 +105,7 @@ const HOST_ID = /^local_[A-Za-z0-9-]{1,64}$/;
 ipcMain.handle('open-in-claude', async (_e, id: string) => {
   const run = allRuns().find((r) => r.id === id);
   if (run?.hostSessionId && HOST_ID.test(run.hostSessionId)) {
-    const url = `claude://code/${run.gate ? 'needs-input' : 'continue'}?session=${run.hostSessionId}&source=clearance`;
+    const url = `claude://code/continue?session=${run.hostSessionId}&source=clearance`;
     await shell.openExternal(url);
     return { kind: 'session', url };
   }
@@ -136,6 +134,7 @@ app.whenReady().then(async () => {
   await owned.start();
   await observed.start();
   publish();
+  observedLoaded = true;
   // Dev only: start an owned run on launch so the whole path can be exercised headlessly.
   if (process.env.CLEARANCE_SMOKE_START) {
     const res = await owned.begin(JSON.parse(process.env.CLEARANCE_SMOKE_START) as StartRunInput);

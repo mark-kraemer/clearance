@@ -8,7 +8,9 @@ import { createInterface } from 'node:readline';
 import { promisify } from 'node:util';
 
 import { splitTitle } from '../core/run';
-import { GATE_NAME, inferGateId } from '../core/transcript';
+import { slug } from '../core/slug';
+import { stageLabel, stageOrder } from '../core/stages';
+import { GATE_NAME, inferGateId, normalizeQuestions } from '../core/transcript';
 import { initialStream, reduceStream, type StreamState } from '../core/stream';
 import type { Gate, GateQuestion, Run, RunKind, Stage, StageId, StoreEntry } from '../core/types';
 import { APP_SUPPORT_DIR } from './paths';
@@ -19,6 +21,8 @@ export interface StartRunInput {
   kind: RunKind;
   task: string;
   repoPath: string;
+  /** The branch the worktree starts from; the sheet shows the one it will use. */
+  baseBranch?: string;
 }
 
 interface Persisted {
@@ -54,8 +58,6 @@ interface Live {
 }
 
 const SKILL_STAGE: Record<string, StageId> = { grilling: 'plan', 'domain-modeling': 'plan', tdd: 'implement', 'ready-for-review': 'review', 'create-pr': 'pr', 'file-pr': 'pr', 'pr-comments': 'feedback' };
-const STAGE_LABEL: Record<StageId, string> = { plan: 'Plan', implement: 'Implement', review: 'Review', pr: 'File PR', feedback: 'Feedback' };
-const ORDER: StageId[] = ['plan', 'implement', 'review', 'pr', 'feedback'];
 
 /**
  * Runs that Clearance starts and owns. Each is a `claude -p` child in its own
@@ -68,6 +70,7 @@ export class OwnedRuns extends EventEmitter {
   private server: Server | null = null;
   private port = 0;
   private storeLookup: (cliSessionId: string) => StoreEntry | null = () => null;
+  private claudeBin = 'claude';
   runs: Run[] = [];
 
   constructor(private readonly serverScript: string) {
@@ -81,6 +84,7 @@ export class OwnedRuns extends EventEmitter {
 
   async start(): Promise<void> {
     mkdirSync(APP_SUPPORT_DIR, { recursive: true });
+    this.claudeBin = await resolveClaude();
     for (const p of this.load()) this.live.set(p.id, { p, child: null, stream: initialStream(), pending: null, permissionGate: null, exited: true, exitCode: null, lastActivity: p.started });
     await this.listen();
     this.publish();
@@ -96,12 +100,11 @@ export class OwnedRuns extends EventEmitter {
     if (!task) return { ok: false, error: 'Name the task.' };
     if (!existsSync(join(input.repoPath, '.git'))) return { ok: false, error: `${input.repoPath} is not a git repository.` };
     const { key, title } = splitTitle(task);
-    const slug = task.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 40).replace(/-+$/g, '') || 'run';
-    const name = `${slug}-${randomBytes(3).toString('hex')}`;
+    const name = `${slug(task) || 'run'}-${randomBytes(3).toString('hex')}`;
     const cwd = join(input.repoPath, '.claude', 'worktrees', name);
     const branch = `claude/${name}`;
     try {
-      const base = await defaultBranch(input.repoPath);
+      const base = input.baseBranch?.trim() || (await defaultBranch(input.repoPath));
       mkdirSync(join(input.repoPath, '.claude', 'worktrees'), { recursive: true });
       await execFileP('git', ['-C', input.repoPath, 'worktree', 'add', '-b', branch, cwd, base]);
     } catch (err) {
@@ -162,15 +165,15 @@ export class OwnedRuns extends EventEmitter {
     args.push(resume ? '--resume' : '--session-id', l.p.cliSessionId);
     const env = { ...process.env };
     delete env.ELECTRON_RUN_AS_NODE;
-    const child = spawn('claude', args, { cwd: l.p.cwd, env, stdio: ['pipe', 'pipe', 'pipe'] });
+    const child = spawn(this.claudeBin, args, { cwd: l.p.cwd, env, stdio: ['pipe', 'pipe', 'pipe'] });
     l.child = child;
     l.exited = false;
     l.exitCode = null;
-    l.stream = { ...initialStream(), sessionId: l.p.cliSessionId, turnOpen: true };
+    l.stream = { ...initialStream(), turnOpen: true };
     createInterface({ input: child.stdout }).on('line', (line) => this.onLine(l, line));
     createInterface({ input: child.stderr }).on('line', (line) => this.emit('log', `[${l.p.key || l.p.title}] ${line}`));
     child.on('error', (err) => {
-      l.stream = { ...l.stream, lastError: `Could not start claude: ${err.message}`, turnOpen: false };
+      l.stream = { ...l.stream, lastError: `Could not start claude (${this.claudeBin}): ${err.message}`, turnOpen: false };
       this.publish();
     });
     child.on('exit', (code) => {
@@ -204,7 +207,10 @@ export class OwnedRuns extends EventEmitter {
     if (e.type === 'assistant' && Array.isArray(e.message?.content)) {
       for (const b of e.message!.content) {
         const skill = b.type === 'tool_use' && b.name === 'Skill' ? b.input?.skill?.replace(/^[^:]+:/, '') : undefined;
-        if (skill && SKILL_STAGE[skill]) l.p.stageHint = SKILL_STAGE[skill];
+        if (skill && SKILL_STAGE[skill] && l.p.stageHint !== SKILL_STAGE[skill]) {
+          l.p.stageHint = SKILL_STAGE[skill];
+          this.save();
+        }
       }
     }
     l.stream = reduceStream(l.stream, ev, { now: Date.now(), activeStage: l.p.stageHint });
@@ -239,8 +245,9 @@ export class OwnedRuns extends EventEmitter {
           const toolName = payload.tool_name || '';
           const input = payload.input || {};
           const pending: Pending = { toolName, input, toolUseId: payload.tool_use_id ?? null, resolve: (decision) => res.writeHead(200, { 'content-type': 'application/json' }).end(decision) };
-          req.on('close', () => {
-            if (l.pending === pending) {
+          // Only an aborted request clears the gate; a finished response has already resolved it.
+          res.on('close', () => {
+            if (!res.writableFinished && l.pending === pending) {
               l.pending = null;
               l.permissionGate = null;
               this.publish();
@@ -248,7 +255,7 @@ export class OwnedRuns extends EventEmitter {
           });
           l.pending = pending;
           if (toolName === 'AskUserQuestion') {
-            const questions = ((input.questions as GateQuestion[] | undefined) || []).map((q) => ({ question: q.question, header: q.header, multiSelect: !!q.multiSelect, options: (q.options || []).map((o) => ({ label: o.label, description: o.description })) }));
+            const questions = normalizeQuestions(input.questions);
             const id = inferGateId(l.stream.currentText + ' ' + questions.map((q) => q.question).join(' '), l.p.stageHint);
             l.permissionGate = { id, name: GATE_NAME[id], since: Date.now(), summary: questions[0]?.question || 'Question', text: l.stream.currentText, questions, toolUseId: pending.toolUseId || undefined };
           } else {
@@ -307,7 +314,6 @@ export class OwnedRuns extends EventEmitter {
 
   private publish(): void {
     this.runs = [...this.live.values()].map((l) => this.toRun(l));
-    this.save();
     this.emit('runs', this.runs);
   }
 
@@ -333,9 +339,24 @@ export class OwnedRuns extends EventEmitter {
 }
 
 function hintedStages(kind: RunKind, hint: StageId | null): Stage[] {
-  const ids = kind === 'bug' ? ORDER.filter((s) => s !== 'plan') : ORDER;
+  const ids = stageOrder(kind);
   const at = hint ? ids.indexOf(hint) : 0;
-  return ids.map((id, i) => ({ id, label: id === 'implement' && kind === 'bug' ? 'Fix' : STAGE_LABEL[id], status: i < at ? 'done' : i === at ? 'active' : 'pending', note: '' }));
+  return ids.map((id, i) => ({ id, label: stageLabel(id, kind), status: i < at ? 'done' : i === at ? 'active' : 'pending', note: '' }));
+}
+
+/**
+ * A Finder-launched app gets the GUI PATH, which rarely holds `claude`
+ * (installed under ~/.local/bin or a version manager). A login shell knows
+ * where it is; ask once.
+ */
+async function resolveClaude(): Promise<string> {
+  try {
+    const { stdout } = await execFileP('/bin/zsh', ['-lc', 'command -v claude'], { timeout: 8000 });
+    const found = stdout.trim().split('\n').pop() || '';
+    return found.startsWith('/') ? found : 'claude';
+  } catch {
+    return 'claude';
+  }
 }
 
 function summarize(input: Record<string, unknown>): string {

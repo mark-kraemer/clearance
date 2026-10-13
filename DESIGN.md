@@ -291,12 +291,15 @@ macOS-style: 28px rounded app icon in accent blue, 11px header row (app name, ti
 ### New Run Sheet (signature)
 A macOS sheet that hangs from the title bar: 540px card with square top corners and a 12px bottom radius, pane surface, line border, the window shadow, over the same 18% scrim as the palette; it drops 14px over 0.22s on `cubic-bezier(.2,.8,.2,1)`. A 13px 600 heading over a soft line, then a 92px / 1fr label-and-field grid (labels right-aligned in secondary ink, 12px gap) that stacks to one column under 760px.
 
-- **Task** is a combobox: a 28px text field with a 7px-radius popover list beneath (4px padded, 5px-radius rows of mono key, title, and an 11px trailing meta in tertiary ink; `On the board` and `PR open` metas use the amber ink). Picking an issue fills the field and sets Kind and Repository unless the user already touched them; an 11.5px secondary line under the field states the Linear state, points, and any open PR.
 - **Kind** is a segmented control: 7px-radius track on the list surface with 2px padding; the pressed segment is a pane-colored button with a 1px 12% shadow, the only shadow on a control.
-- **Worktree** and **Runs** are derived, read-only: the worktree in mono secondary ink, the command as an 11.5px mono block on the list surface with a soft 1px border and 7px radius, the binary name at 500 weight in primary ink.
-- **Open in Claude Code when it starts** is a native checkbox tinted with the accent.
-- **Validation** is inline under the field in amber ink and never a dialog; a duplicate issue swaps the primary action from `Start run` to `Go to run`.
-- **Actions** sit right-aligned: default Cancel, primary Start run with its ⌘↩ key cap. Escape closes the sheet; a second Escape is needed only when the picker is open.
+- **Task** is a 28px text field, issue key first when there is one. (A Linear issue lookup is a follow-up; the prototype's combobox is not in the app.)
+- **Repository** is a native select listing the repositories the desktop app has made worktrees in, newest first.
+- **Worktree** and **Runs** are derived, read-only: the worktree path and base branch in mono secondary ink, the `claude` command as an 11.5px mono block on the list surface with a soft 1px border and 7px radius, the binary name at 500 weight in primary ink. The base branch shown is the one the run starts from.
+- **Validation** is inline under the field in amber ink and never a dialog.
+- **Actions** sit right-aligned: default Cancel, primary Start run with its ⌘↩ key cap. Escape closes the sheet.
+
+### Structured questions
+When a gate is an `AskUserQuestion`, each question renders as a 7px-radius block on the list surface: the question at 500 weight, its short header beneath in 11.5px tertiary ink (sentence case, never the uppercase section label), then the options as quick-reply chips; the chosen option's description appears under the chips in secondary ink. On an observed run the chips are disabled at 70% opacity, because the answer belongs to Claude Code.
 ## Do's and Don'ts
 
 ### Do:
