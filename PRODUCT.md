@@ -18,7 +18,7 @@ One primary user: a software director at a consulting shop (RoleModel Software) 
 
 ## Product Purpose
 
-A control room for concurrent Claude Code pipeline runs. Every run follows the fixed stages of the `pipeline` plugin (RoleModel/claude-plugins#1): plan, implement, review, file PR, reviewer feedback for a feature; the same minus plan for a bug. The pipeline stops only at five human gates (G1 scope, G2 plan, G3 visual, G4 review triage, G5 side effects).
+A control room for concurrent Claude Code pipeline runs. Every run follows the fixed stages of the `pipeline` plugin (`plugins/pipeline` in this repository): plan, implement, review, file PR, reviewer feedback for a feature; the same minus plan for a bug. The pipeline stops only at five human gates (G1 scope, G2 plan, G3 visual, G4 review triage, G5 side effects).
 
 The app exists so the user can:
 
@@ -36,7 +36,7 @@ The Claude desktop app's sidebar lists sessions by title and unread state; it kn
 ## Operating Context
 
 - Sessions run in the Claude desktop app (Code tab), three to six concurrently, typically in app-managed worktrees. The user answers gates in a single line ("go", "fix 1 and 3", "keep the defaults").
-- The pipeline plugin stores one run per session: kind (feature or bug), title with the Linear issue ID first ("ALM-480 Partner create/update tools"), and a stage list where each stage is pending, active, done, or skipped with an optional one-line note (the PR link lands as the File PR note).
+- The pipeline plugin stores one run per session: kind (feature or bug), title with the Linear issue ID first ("HBR-480 Client create/update tools"), and a stage list where each stage is pending, active, done, or skipped with an optional one-line note (the PR link lands as the File PR note).
 - Gate content the user needs to read: G1 is a PR split with points plus up to three expensive-to-reverse questions each tagged with reversal cost; G2 is a plan summary ending in "Implement?"; G3 is a screenshot on real dev data plus listed visual compromises; G4 is a table of verified findings each with a fix / skip / ask line; G5 is one line naming an action and its visible consequence.
 - Work also surfaces PR state (open, CI, review comments) and Linear issue IDs; both are secondary context, not the app's job.
 - The user works at a Mac, usually with the Claude desktop app open beside this one, often returning after 20 to 60 minutes away.
@@ -67,8 +67,7 @@ Terminology: run (one pipeline session), stage (plan, implement, review, PR, fee
 
 ## Evidence on Hand
 
-- The pipeline plugin source and skill: https://github.com/RoleModel/claude-plugins/pull/1 (stage list, gate definitions, pane rendering, hook mechanics).
-- The pipeline flow explainer artifact: https://claude.ai/artifact/RZuZGM3o63oHTBRZhCf2pW (example run titles ALM-480 and ALM-512, example notes, example PR link).
+- The pipeline plugin source and skill: `plugins/pipeline` (stage list, gate definitions, pane rendering, hook mechanics).
 - No real session data, screenshots, or transcripts are on hand. All runs in the prototype are synthetic and labeled.
 
 ## Product Principles

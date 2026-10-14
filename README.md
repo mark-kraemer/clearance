@@ -23,7 +23,7 @@ I am exploring better ways to build software with agents: which decisions still 
 
 I run several Claude Code sessions at once, usually one Linear issue each, in their own worktrees. The agents do most of the work between decisions. My job is the decisions: what is in scope, whether the plan is right, whether the UI looks right, which review findings matter, and whether something may leave my machine. With five sessions going, I am the bottleneck. The work that matters most is noticing which run is waiting on me and answering it quickly, without rereading a whole transcript.
 
-The `/pipeline` skill (from the `pipeline` plugin) writes that process down. A feature run moves through five fixed stages: plan, implement, review, file PR, and reviewer feedback. A bug run skips plan and starts with the fix. The run stops for a human only at five gates:
+The `/pipeline` skill (from the `pipeline` plugin in [`plugins/pipeline`](plugins/pipeline)) writes that process down. A feature run moves through five fixed stages: plan, implement, review, file PR, and reviewer feedback. A bug run skips plan and starts with the fix. The run stops for a human only at five gates:
 
 | Gate | When | What I decide |
 | --- | --- | --- |
@@ -40,12 +40,25 @@ Clearance is the control room for that flow. The Claude desktop app lists sessio
 ## Requirements
 
 - macOS, with the Claude desktop app and the `claude` CLI installed and signed in
-- The `pipeline` plugin from RoleModel/claude-plugins, which defines the stages and gates Clearance shows
+- The `pipeline` plugin from this repository, which defines the stages and gates Clearance shows
 - Node and pnpm, to build it
+
+## The pipeline plugin
+
+[`plugins/pipeline`](plugins/pipeline) holds the `/pipeline` skill and the hooks that track each run. Install it from this repository's marketplace:
+
+```bash
+claude plugin marketplace add mark-kraemer/clearance
+claude plugin install pipeline@clearance
+```
+
+Ask Claude to implement an issue or fix a bug, or run `/pipeline feature <task>`. A **Pipeline** pane shows the run (✓ done, ● active, ○ pending, – skipped) with a one-line note per stage, and the hooks store it where Clearance reads it. `/pipeline show` reopens the pane; `/pipeline clear` ends the run.
+
+Each stage names a skill it hands off to (`grilling`, `tdd`, `ready-for-review`, `file-pr`, `pr-comments`, and a few more). They are not bundled. When one isn't installed, the stage does its work directly until its "Done when" condition in the skill holds, and the gates apply either way. The skill keeps its gate records in a per-branch review log (`skills/pipeline/scripts/review_log.sh`, written under `.git/claude-reviews/`), so a new session can resume a branch without rereading the old transcript. It needs `gh` for PR and CI state.
 
 ## How it works
 
-Runs follow the stages of the `pipeline` plugin (RoleModel/claude-plugins): plan, implement, review, file PR, feedback, stopping only at the five human gates G1 to G5.
+Runs follow the stages of the `pipeline` plugin: plan, implement, review, file PR, feedback, stopping only at the five human gates G1 to G5.
 
 **Observed runs** come from four files Claude Code and the desktop app already write:
 
@@ -63,7 +76,7 @@ They can be read but not answered here, because the pending question belongs to 
 ```
 claude -p --input-format stream-json --output-format stream-json --verbose \
   --permission-mode auto --permission-prompt-tool mcp__clearance__permission \
-  --mcp-config '{…}' --session-id <uuid> "/pipeline feature ALM-520 …"
+  --mcp-config '{…}' --session-id <uuid> "/pipeline feature HBR-520 …"
 ```
 
 Auto mode decides routine permissions. What it escalates, and every `AskUserQuestion`, reaches a small MCP server bundled with the app, which forwards the request to Clearance and returns your decision. Gates that end the turn with a question are answered by sending a message to the run. A run whose process exited resumes with `--resume` when you send to it.

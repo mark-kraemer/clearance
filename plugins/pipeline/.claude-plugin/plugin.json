@@ -1,0 +1,10 @@
+{
+  "name": "pipeline",
+  "version": "0.1.0",
+  "description": "Runs feature and bug-fix work through fixed stages and five human gates, with a pane that shows where the work is",
+  "author": {
+    "name": "Mark Kraemer",
+    "url": "https://github.com/mark-kraemer"
+  },
+  "types": "./types/index.d.ts"
+}

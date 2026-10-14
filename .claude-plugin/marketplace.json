@@ -1,0 +1,16 @@
+{
+  "name": "clearance",
+  "owner": {
+    "name": "Mark Kraemer"
+  },
+  "metadata": {
+    "description": "The pipeline plugin whose runs Clearance shows"
+  },
+  "plugins": [
+    {
+      "name": "pipeline",
+      "source": "./plugins/pipeline",
+      "description": "Feature and bug-fix work through fixed stages and five human gates, with a pane that shows where the work is"
+    }
+  ]
+}
