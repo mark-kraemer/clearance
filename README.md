@@ -17,9 +17,7 @@ It reads the runs you already have open in the Claude desktop app and can start 
 
 ## The idea
 
-Clearance is a concept as much as a tool. It is how I think about developing software with agents, made concrete enough to use every day.
-
-I am exploring better ways to build software with agents: which decisions still need a person, which ones a machine can enforce, and how to keep several automated runs moving without reading every transcript. Clearance is the human-in-the-loop end of that question. Agents do the work between a few fixed decision points, and the tool makes those decision points fast to find and fast to answer. Its counterpart, [Vernacular](https://github.com/mark-kraemer/vernacular), is the unattended end: machine gates only, nobody at the keyboard.
+Clearance is a concept as much as a tool. It is how I think about developing software with agents, made concrete enough to use every day. I'm exploring better ways to do that, and Clearance is the half where I stay in the loop. [Vernacular](https://github.com/mark-kraemer/vernacular) is the half with nobody at the keyboard.
 
 I run several Claude Code sessions at once, usually one Linear issue each, in their own worktrees. The agents do most of the work between decisions. My job is the decisions: what is in scope, whether the plan is right, whether the UI looks right, which review findings matter, and whether something may leave my machine. With five sessions going, I am the bottleneck. The work that matters most is noticing which run is waiting on me and answering it quickly, without rereading a whole transcript.
 
