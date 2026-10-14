@@ -7,23 +7,23 @@ import type { Gate, StoreEntry } from '../app/core/types';
 const session = {
   sessionId: 'local_07bec961-7bd9-4559-b066-c21256348928',
   cliSessionId: 'aab05bda-62eb-4dd9-845a-259e428d9d2d',
-  cwd: '/Users/me/Sites/rolemodel/almanac/.claude/worktrees/partner-create-update-mcp-3c9604',
-  originCwd: '/Users/me/Sites/rolemodel/almanac',
-  worktreePath: '/Users/me/Sites/rolemodel/almanac/.claude/worktrees/partner-create-update-mcp-3c9604',
-  worktreeName: 'partner-create-update-mcp-3c9604',
+  cwd: '/Users/me/Sites/acme/harbor/.claude/worktrees/client-create-update-mcp-3c9604',
+  originCwd: '/Users/me/Sites/acme/harbor',
+  worktreePath: '/Users/me/Sites/acme/harbor/.claude/worktrees/client-create-update-mcp-3c9604',
+  worktreeName: 'client-create-update-mcp-3c9604',
   sourceBranch: 'master',
-  branch: 'claude/partner-index-design-bb488f',
+  branch: 'claude/client-index-design-bb488f',
   createdAt: 1791903372783,
   lastActivityAt: 1791910060756,
-  title: 'Partner index design updates',
+  title: 'Client index design updates',
   isArchived: false,
-  prs: [{ prNumber: 1297, repo: 'RoleModel/almanac', url: 'https://github.com/RoleModel/almanac/pull/1297', state: 'OPEN' }],
-  postTurnSummary: { status_category: 'completed', status_detail: 'Partners tab reworked', needs_action: '' },
+  prs: [{ prNumber: 297, repo: 'acme/harbor', url: 'https://github.com/acme/harbor/pull/297', state: 'OPEN' }],
+  postTurnSummary: { status_category: 'completed', status_detail: 'Clients tab reworked', needs_action: '' },
 };
 const registry = { pid: 15660, sessionId: 'aab05bda-62eb-4dd9-845a-259e428d9d2d', status: 'idle', hostSessionId: 'local_07bec961-7bd9-4559-b066-c21256348928', updatedAt: 1791910060000 };
 const entry: StoreEntry = {
   kind: 'feature',
-  title: 'ALM-480 Partner create/update tools',
+  title: 'HBR-480 Client create/update tools',
   stages: [
     { id: 'plan', label: 'Plan', status: 'done', note: 'One PR, 3 pts · G2: go' },
     { id: 'implement', label: 'Implement', status: 'done', note: '18 specs green' },
@@ -41,14 +41,14 @@ describe('observedRun', () => {
       id: 'aab05bda-62eb-4dd9-845a-259e428d9d2d',
       source: 'observed',
       hostSessionId: 'local_07bec961-7bd9-4559-b066-c21256348928',
-      key: 'ALM-480',
-      title: 'Partner create/update tools',
+      key: 'HBR-480',
+      title: 'Client create/update tools',
       kind: 'feature',
       cwd: session.cwd,
-      worktree: 'partner-create-update-mcp-3c9604',
-      branch: 'claude/partner-index-design-bb488f',
-      repo: 'RoleModel/almanac',
-      pr: { number: 1297, url: 'https://github.com/RoleModel/almanac/pull/1297', state: 'OPEN' },
+      worktree: 'client-create-update-mcp-3c9604',
+      branch: 'claude/client-index-design-bb488f',
+      repo: 'acme/harbor',
+      pr: { number: 297, url: 'https://github.com/acme/harbor/pull/297', state: 'OPEN' },
       started: 1791903372783,
       lastActivity: 1791910060756,
     });
@@ -57,7 +57,7 @@ describe('observedRun', () => {
   it('is idle when the process is alive and idle with no gate and an open stage', () => {
     const run = observedRun({ entry, session, registry, gate: null, activity: [] });
     expect(run.status).toBe('idle');
-    expect(run.statusLabel).toBe('Partners tab reworked');
+    expect(run.statusLabel).toBe('Clients tab reworked');
   });
 
   it('needs you when a gate is open and the process is idle', () => {
@@ -86,8 +86,8 @@ describe('observedRun', () => {
   });
 
   it('falls back to the session title and no key when the store title has no issue id', () => {
-    const run = observedRun({ entry: { ...entry, title: 'Partner tools' }, session, registry, gate: null, activity: [] });
+    const run = observedRun({ entry: { ...entry, title: 'Client tools' }, session, registry, gate: null, activity: [] });
     expect(run.key).toBe('');
-    expect(run.title).toBe('Partner tools');
+    expect(run.title).toBe('Client tools');
   });
 });

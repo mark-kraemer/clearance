@@ -211,7 +211,7 @@ A cool gray tonal stack with one system-blue accent and three semantic hues, eac
 - **Body Dense** (400, 12.5px): stage labels (500), notes, table cells, activity rows, history, panel footers, chip labels (12px), muted row subtitles (12px).
 - **Caption** (400, 11px): key caps, row numbers, timestamps, reversal costs, notification header. Captions at 11.5px appear in hints, status bar, screenshot captions, and triage "why" lines.
 - **Section Label** (600, 11px, +0.04em, uppercase): list group headers (Needs you / Working / Done today), history heading, palette group heads, triage column heads. This is the macOS sidebar section-header device, used only to label a group of items below it.
-- **Mono** (400-700, 11-12px): issue keys (`ALM-480`), gate IDs (700), branch names, activity timestamps, question letters, table row numbers.
+- **Mono** (400-700, 11-12px): issue keys (`HBR-480`), gate IDs (700), branch names, activity timestamps, question letters, table row numbers.
 
 ### Named Rules
 **The Tabular Time Rule.** Every elapsed time, waiting time, count, and timestamp sets `font-variant-numeric: tabular-nums` so columns of durations align and reflow does not jitter.

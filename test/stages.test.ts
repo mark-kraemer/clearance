@@ -6,7 +6,7 @@ import { stagesFromStore } from '../app/core/stages';
 const store = {
   'run:aab05bda-62eb-4dd9-845a-259e428d9d2d': {
     kind: 'feature',
-    title: 'ALM-480 Partner create/update tools',
+    title: 'HBR-480 Client create/update tools',
     stages: [
       { id: 'plan', label: 'Plan (grilling)', status: 'done', note: 'One PR, 3 pts · G2: go' },
       { id: 'implement', label: 'Implement, test-first', status: 'done', note: '18 specs green · 4 commits' },
@@ -23,7 +23,7 @@ describe('stagesFromStore', () => {
     const entry = stagesFromStore(store, 'aab05bda-62eb-4dd9-845a-259e428d9d2d');
     expect(entry).toEqual({
       kind: 'feature',
-      title: 'ALM-480 Partner create/update tools',
+      title: 'HBR-480 Client create/update tools',
       stages: [
         { id: 'plan', label: 'Plan', status: 'done', note: 'One PR, 3 pts · G2: go' },
         { id: 'implement', label: 'Implement', status: 'done', note: '18 specs green · 4 commits' },
@@ -40,7 +40,7 @@ describe('stagesFromStore', () => {
   });
 
   it('labels a bug run’s first stage Fix', () => {
-    const bug = { 'run:b': { kind: 'bug', title: 'ALM-512 Booked hours double-count PTO', stages: [{ id: 'implement', label: 'Fix, test-first', status: 'active' }] } };
+    const bug = { 'run:b': { kind: 'bug', title: 'HBR-512 Booked hours double-count PTO', stages: [{ id: 'implement', label: 'Fix, test-first', status: 'active' }] } };
     expect(stagesFromStore(bug, 'b')?.stages[0]).toEqual({ id: 'implement', label: 'Fix', status: 'active', note: '' });
   });
 });

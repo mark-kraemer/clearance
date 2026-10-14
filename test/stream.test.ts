@@ -41,8 +41,8 @@ describe('reduceStream', () => {
   });
 
   it('ends idle, with no gate, when the turn ends on a plain report', () => {
-    const report = { type: 'assistant', session_id: sid, message: { id: 'm4', role: 'assistant', content: [{ type: 'text', text: 'PR opened: almanac#1284.' }] } };
-    const s = run([init, report, { ...result, result: 'PR opened: almanac#1284.' }], 'review');
+    const report = { type: 'assistant', session_id: sid, message: { id: 'm4', role: 'assistant', content: [{ type: 'text', text: 'PR opened: harbor#284.' }] } };
+    const s = run([init, report, { ...result, result: 'PR opened: harbor#284.' }], 'review');
     expect(s.turnOpen).toBe(false);
     expect(s.gate).toBeNull();
   });

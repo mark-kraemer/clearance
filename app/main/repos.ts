@@ -12,7 +12,7 @@ const CHOSEN_FILE = join(APP_SUPPORT_DIR, 'repos.json');
 export interface RepoChoice {
   /** Repository root on disk. */
   path: string;
-  /** Short label, e.g. "rolemodel/almanac". */
+  /** Short label, e.g. "acme/harbor". */
   label: string;
   /** Branch new worktrees start from. */
   baseBranch: string;

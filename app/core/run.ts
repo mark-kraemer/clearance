@@ -37,7 +37,7 @@ export interface ObservedInput {
 
 const ISSUE_KEY = /^([A-Z][A-Z0-9]+-\d+)\s*(.*)$/;
 
-/** Splits "ALM-480 Partner tools" into its issue key and title. */
+/** Splits "HBR-480 Client tools" into its issue key and title. */
 export function splitTitle(title: string): { key: string; title: string } {
   const m = title.trim().match(ISSUE_KEY);
   return m ? { key: m[1], title: m[2] || title.trim() } : { key: '', title: title.trim() };

@@ -434,7 +434,7 @@ blockquote { margin: 0 0 10px; padding: 10px 14px; color: var(--fg); background:
           <span class="err" id="nr-err" hidden></span>
         </div>
         <div class="f"><span class="lbl" id="nr-kind-label">Kind</span><div class="seg" role="group" aria-labelledby="nr-kind-label"><button type="button" data-kind="feature" aria-pressed="true">Feature</button><button type="button" data-kind="bug" aria-pressed="false">Bug</button></div></div>
-        <div class="f"><label for="nr-repo">Repository</label><select id="nr-repo"><option>RoleModel/almanac</option><option>RoleModel/claude-plugins</option><option>RoleModel/tassel</option></select></div>
+        <div class="f"><label for="nr-repo">Repository</label><select id="nr-repo"><option>acme/harbor</option><option>mark-kraemer/clearance</option><option>acme/harbor-mobile</option></select></div>
         <div class="f"><span class="lbl">Worktree</span><span class="derived" id="nr-branch"></span></div>
         <div class="f"><span class="lbl">Runs</span><code class="cmd" id="nr-cmd"></code></div>
         <div class="f"><span class="lbl"></span><label class="check"><input type="checkbox" id="nr-open">Open in Claude Code when it starts</label></div>
@@ -474,35 +474,35 @@ blockquote { margin: 0 0 10px; padding: 10px 14px; color: var(--fg); background:
   /* All runs below are synthetic example data for the prototype. */
   const SEED_RUNS = [
     {
-      id: 'alm-503', key: 'ALM-503', title: 'Milestone budget rollover at close', kind: 'feature', branch: 'alm-503-budget-rollover',
+      id: 'hbr-503', key: 'HBR-503', title: 'Milestone budget rollover at close', kind: 'feature', branch: 'hbr-503-budget-rollover',
       started: minsAgo(74), stages: stages('feature', { plan: 'active' }),
       gate: { id: 'G1', since: minsAgo(41), summary: 'One PR, 5 pts · three questions', kind: 'scope' },
-      history: [['Started', 'feature pipeline, worktree alm-503-budget-rollover']],
+      history: [['Started', 'feature pipeline, worktree hbr-503-budget-rollover']],
     },
     {
-      id: 'alm-480', key: 'ALM-480', title: 'Partner create/update tools', kind: 'feature', branch: 'alm-480-partner-tools',
+      id: 'hbr-480', key: 'HBR-480', title: 'Client create/update tools', kind: 'feature', branch: 'hbr-480-client-tools',
       started: minsAgo(190), stages: stages('feature', { plan: 'done', implement: 'done', review: 'active' }, { plan: 'One PR, 3 pts · G2: go', implement: '18 specs green · 4 commits' }),
       gate: { id: 'G4', since: minsAgo(18), summary: '3 findings · 2 fix, 1 ask', kind: 'triage' },
-      history: [['Started', 'feature pipeline, worktree alm-480-partner-tools'], ['G1', 'one PR, 3 pts, two questions answered'], ['G2', 'go'], ['Implement', '18 specs green, 4 commits']],
+      history: [['Started', 'feature pipeline, worktree hbr-480-client-tools'], ['G1', 'one PR, 3 pts, two questions answered'], ['G2', 'go'], ['Implement', '18 specs green, 4 commits']],
     },
     {
-      id: 'alm-458', key: 'ALM-458', title: 'Partner pulse timeout retry', kind: 'bug', branch: 'alm-458-pulse-retry',
-      started: minsAgo(1440 + 130), stages: stages('bug', { implement: 'done', review: 'done', pr: 'done', feedback: 'active' }, { implement: 'Regression spec red → green', review: 'G4: clean', pr: 'github.com/RoleModel/almanac/pull/1271' }),
+      id: 'hbr-458', key: 'HBR-458', title: 'Client digest timeout retry', kind: 'bug', branch: 'hbr-458-digest-retry',
+      started: minsAgo(1440 + 130), stages: stages('bug', { implement: 'done', review: 'done', pr: 'done', feedback: 'active' }, { implement: 'Regression spec red → green', review: 'G4: clean', pr: 'github.com/acme/harbor/pull/271' }),
       gate: { id: 'G5', since: minsAgo(9), summary: 'Reply to the reviewer in your name', kind: 'side' },
-      history: [['Started', 'bug pipeline'], ['Fix', 'regression spec red then green'], ['G4', 'clean'], ['File PR', 'almanac#1271'], ['Feedback', 'the reviewer left 1 comment on the timeout']],
+      history: [['Started', 'bug pipeline'], ['Fix', 'regression spec red then green'], ['G4', 'clean'], ['File PR', 'harbor#271'], ['Feedback', 'the reviewer left 1 comment on the timeout']],
     },
     {
-      id: 'alm-512', key: 'ALM-512', title: 'Booked hours double-count PTO', kind: 'bug', branch: 'alm-512-booked-pto',
+      id: 'hbr-512', key: 'HBR-512', title: 'Booked hours double-count PTO', kind: 'bug', branch: 'hbr-512-booked-pto',
       started: minsAgo(52), stages: stages('bug', { implement: 'active' }, { implement: 'Regression spec red → green · 2 commits' }),
       gate: { id: 'G3', since: minsAgo(6), summary: 'Screenshot on dev data · 2 compromises', kind: 'visual' },
-      history: [['Started', 'bug pipeline, worktree alm-512-booked-pto'], ['Fix', 'regression spec red then green, 2 commits']],
+      history: [['Started', 'bug pipeline, worktree hbr-512-booked-pto'], ['Fix', 'regression spec red then green, 2 commits']],
     },
     {
-      id: 'alm-497', key: 'ALM-497', title: 'Utilization report CSV export', kind: 'feature', branch: 'alm-497-utilization-csv',
+      id: 'hbr-497', key: 'HBR-497', title: 'Utilization report CSV export', kind: 'feature', branch: 'hbr-497-utilization-csv',
       started: minsAgo(96), stages: stages('feature', { plan: 'done', implement: 'active' }, { plan: 'One PR, 2 pts · G2: go' }),
       gate: null, working: { label: 'tdd · running the suite', next: 'G3 if the diff touches UI, otherwise review' },
       activity: [['16:04', 'tdd · <code>utilization_export_spec.rb</code> · 14 of 18 green', true], ['16:01', 'Edit <code>app/exports/utilization_csv.rb</code>'], ['15:58', 'Commit · Export utilization as CSV, one row per person per week'], ['15:52', 'tdd · red: 4 new specs failing as expected'], ['15:40', 'G2 · go']],
-      history: [['Started', 'feature pipeline, worktree alm-497-utilization-csv'], ['G1', 'one PR, 2 pts, no questions'], ['G2', 'go']],
+      history: [['Started', 'feature pipeline, worktree hbr-497-utilization-csv'], ['G1', 'one PR, 2 pts, no questions'], ['G2', 'go']],
     },
     {
       id: 'cp-88', key: 'CP-88', title: 'Pipeline plugin README and marketplace entry', kind: 'feature', branch: 'pipeline-plugin',
@@ -512,10 +512,10 @@ blockquote { margin: 0 0 10px; padding: 10px 14px; color: var(--fg); background:
       history: [['Started', 'feature pipeline, worktree pipeline-plugin'], ['G1', 'one PR, 1 pt'], ['G2', 'go'], ['Implement', 'docs only, 2 commits']],
     },
     {
-      id: 'alm-471', key: 'ALM-471', title: 'Deliverable search ignores archived', kind: 'bug', branch: 'alm-471-archived-search',
-      started: minsAgo(1440 * 2), stages: stages('bug', { implement: 'done', review: 'done', pr: 'done', feedback: 'skipped' }, { implement: 'Regression spec red → green', review: 'G4: clean', pr: 'github.com/RoleModel/almanac/pull/1266', feedback: 'Merged without comments' }),
+      id: 'hbr-471', key: 'HBR-471', title: 'Deliverable search ignores archived', kind: 'bug', branch: 'hbr-471-archived-search',
+      started: minsAgo(1440 * 2), stages: stages('bug', { implement: 'done', review: 'done', pr: 'done', feedback: 'skipped' }, { implement: 'Regression spec red → green', review: 'G4: clean', pr: 'github.com/acme/harbor/pull/266', feedback: 'Merged without comments' }),
       gate: null, done: { label: 'Merged', when: minsAgo(140) },
-      history: [['Started', 'bug pipeline'], ['Fix', 'regression spec red then green'], ['G4', 'clean'], ['File PR', 'almanac#1266'], ['Feedback', 'skipped, merged without comments']],
+      history: [['Started', 'bug pipeline'], ['Fix', 'regression spec red then green'], ['G4', 'clean'], ['File PR', 'harbor#266'], ['Feedback', 'skipped, merged without comments']],
     },
   ];
 
@@ -557,7 +557,7 @@ blockquote { margin: 0 0 10px; padding: 10px 14px; color: var(--fg); background:
             <rect width="720" height="300" fill="var(--pane)"/>
             <rect width="720" height="36" fill="var(--list)"/><rect x="0" y="36" width="720" height="1" fill="var(--line)"/>
             <text x="20" y="23" font-family="var(--font)" font-size="13" font-weight="600" fill="var(--fg)">Booked hours · week of Oct 6</text>
-            <text x="560" y="23" font-family="var(--font)" font-size="11" fill="var(--fg-2)">Almanac · development</text>
+            <text x="560" y="23" font-family="var(--font)" font-size="11" fill="var(--fg-2)">Harbor · development</text>
             <g font-family="var(--font)" font-size="11" fill="var(--fg-2)"><text x="20" y="62">Person</text><text x="300" y="62">Booked</text><text x="400" y="62">PTO</text><text x="500" y="62">Available</text><text x="620" y="62">Total</text></g>
             <rect x="20" y="70" width="680" height="1" fill="var(--line)"/>
             <g font-family="var(--font)" font-size="12.5" fill="var(--fg)">
@@ -584,13 +584,13 @@ blockquote { margin: 0 0 10px; padding: 10px 14px; color: var(--fg); background:
     triage: {
       quick: ['Fix 1 and 2, ask 3 later', 'Fix all three', 'Fix 1, skip 2, ask 3'],
       body: () => `
-        <p class="muted">spec-review: matches ALM-480. code-review: 3 findings, each verified against the code. Nothing is fixed until you answer.</p>
+        <p class="muted">spec-review: matches HBR-480. code-review: 3 findings, each verified against the code. Nothing is fixed until you answer.</p>
         <div class="tablewrap"><table class="triage">
           <thead><tr><th>#</th><th>Finding</th><th>File</th><th>Proposed</th></tr></thead>
           <tbody>
-            <tr><td class="n">1</td><td><code>PartnerUpdateTool</code> accepts <code>company_uid</code> but never scopes the lookup to the agency, so a partner of another agency can be updated.</td><td class="file"><code>app/tools/partner_update_tool.rb:41</code></td><td><span class="verdict fix">fix</span></td></tr>
-            <tr><td class="n">2</td><td>The create spec stubs <code>Company.find_by!</code>, so the real not-found path is never exercised.</td><td class="file"><code>spec/tools/partner_create_tool_spec.rb:18</code></td><td><span class="verdict fix">fix</span></td></tr>
-            <tr><td class="n">3</td><td><code>PartnerCreateTool#call</code> returns the full partner record including <code>internal_notes</code>. The plan listed public fields only.</td><td class="file"><code>app/tools/partner_create_tool.rb:28</code></td><td><span class="verdict ask">ask<span class="why">changes behavior beyond the plan</span></span></td></tr>
+            <tr><td class="n">1</td><td><code>ClientUpdateTool</code> accepts <code>account_id</code> but never scopes the lookup to the workspace, so a client of another workspace can be updated.</td><td class="file"><code>app/tools/client_update_tool.rb:41</code></td><td><span class="verdict fix">fix</span></td></tr>
+            <tr><td class="n">2</td><td>The create spec stubs <code>Account.find_by!</code>, so the real not-found path is never exercised.</td><td class="file"><code>spec/tools/client_create_tool_spec.rb:18</code></td><td><span class="verdict fix">fix</span></td></tr>
+            <tr><td class="n">3</td><td><code>ClientCreateTool#call</code> returns the full client record including <code>internal_notes</code>. The plan listed public fields only.</td><td class="file"><code>app/tools/client_create_tool.rb:28</code></td><td><span class="verdict ask">ask<span class="why">changes behavior beyond the plan</span></span></td></tr>
           </tbody>
         </table></div>
         <p class="muted">Your answer sets the fix list. The fixes then run to the PR without another stop.</p>`,
@@ -598,8 +598,8 @@ blockquote { margin: 0 0 10px; padding: 10px 14px; color: var(--fg); background:
     side: {
       quick: ['Post it', 'Hold, I will reword'],
       body: () => `
-        <p class="lede">Reply to the reviewer's comment on <a href="https://github.com/RoleModel/almanac/pull/1271" target="_blank" rel="noopener">almanac#1271</a>, posted in your name:</p>
-        <blockquote>Kept the 30 s timeout. The retry covers the slow path, and lowering it would cut off the EU partners' first pulse of the day.</blockquote>
+        <p class="lede">Reply to the reviewer's comment on <a href="https://github.com/acme/harbor/pull/271" target="_blank" rel="noopener">harbor#271</a>, posted in your name:</p>
+        <blockquote>Kept the 30 s timeout. The retry covers the slow path, and lowering it would cut off the EU clients' first digest of the day.</blockquote>
         <p class="muted">Visible to everyone on the PR. Posts under your GitHub account. After posting, the PR is re-read before this is reported done.</p>`,
     },
     visual2: {
@@ -610,7 +610,7 @@ blockquote { margin: 0 0 10px; padding: 10px 14px; color: var(--fg); background:
             <rect width="720" height="220" fill="var(--pane)"/>
             <rect width="720" height="36" fill="var(--list)"/><rect x="0" y="36" width="720" height="1" fill="var(--line)"/>
             <text x="20" y="23" font-family="var(--font)" font-size="13" font-weight="600" fill="var(--fg)">Utilization · Q4 to date</text>
-            <text x="560" y="23" font-family="var(--font)" font-size="11" fill="var(--fg-2)">Almanac · development</text>
+            <text x="560" y="23" font-family="var(--font)" font-size="11" fill="var(--fg-2)">Harbor · development</text>
             <rect x="20" y="52" width="150" height="26" rx="6" fill="var(--pane)" stroke="var(--line)"/>
             <text x="34" y="69" font-family="var(--font)" font-size="12" fill="var(--fg)">Weeks: last 13</text>
             <rect x="590" y="52" width="110" height="26" rx="6" fill="var(--accent)"/>
@@ -721,7 +721,7 @@ blockquote { margin: 0 0 10px; padding: 10px 14px; color: var(--fg); background:
           trail = `<span class="wait">${fmtDur(now() - r.started)} in</span>`;
         } else {
           glyph = icon('done', 'ok');
-          sub = `${r.done.label} · ${esc(r.stages.find((s) => s.id === 'pr').note.replace('github.com/RoleModel/', ''))}`;
+          sub = `${r.done.label} · ${esc(r.stages.find((s) => s.id === 'pr').note.replace('github.com/acme/', ''))}`;
           trail = `<span class="wait">${fmtDur(now() - r.done.when)} ago</span>`;
         }
         html += `<button class="row ${g}" role="option" data-id="${r.id}" aria-selected="${r.id === selectedId}" tabindex="${r.id === selectedId ? 0 : -1}">
@@ -750,7 +750,7 @@ blockquote { margin: 0 0 10px; padding: 10px 14px; color: var(--fg); background:
       return;
     }
     const g = group(r);
-    const rail = r.stages.map((s) => `<div class="stage ${s.status}"><div class="s-top">${icon(STAGE_ICON[s.status], STAGE_CLS[s.status])}<span>${s.label}</span></div>${s.note ? `<div class="s-note">${s.note.startsWith('github.com') ? `<a href="https://${s.note}" target="_blank" rel="noopener">${s.note.replace('github.com/RoleModel/', '')}</a>` : esc(s.note)}</div>` : ''}</div>`).join('');
+    const rail = r.stages.map((s) => `<div class="stage ${s.status}"><div class="s-top">${icon(STAGE_ICON[s.status], STAGE_CLS[s.status])}<span>${s.label}</span></div>${s.note ? `<div class="s-note">${s.note.startsWith('github.com') ? `<a href="https://${s.note}" target="_blank" rel="noopener">${s.note.replace('github.com/acme/', '')}</a>` : esc(s.note)}</div>` : ''}</div>`).join('');
     let panel = '';
     if (g === 'needs') {
       const spec = GATES[r.gate.kind];
@@ -778,7 +778,7 @@ blockquote { margin: 0 0 10px; padding: 10px 14px; color: var(--fg); background:
       const pr = r.stages.find((s) => s.id === 'pr').note;
       panel = `<section class="panel" aria-label="Result">
         <div class="p-head">${icon('done', 'ok')}<strong>${r.done.label}</strong><span class="since">${fmtDur(now() - r.done.when)} ago</span></div>
-        <div class="p-body"><p>${r.done.text || `<a href="https://${pr}" target="_blank" rel="noopener">${pr.replace('github.com/RoleModel/', '')}</a> merged with no review comments, so the feedback stage was skipped.`}</p><p class="muted">${r.done.note || 'The worktree is kept until you clear the run.'}</p></div>
+        <div class="p-body"><p>${r.done.text || `<a href="https://${pr}" target="_blank" rel="noopener">${pr.replace('github.com/acme/', '')}</a> merged with no review comments, so the feedback stage was skipped.`}</p><p class="muted">${r.done.note || 'The worktree is kept until you clear the run.'}</p></div>
         <div class="p-foot"><span>${r.done.foot || 'Every stage closed.'}</span><button class="btn" data-clear>Clear from board</button></div>
       </section>`;
     }
@@ -864,16 +864,16 @@ blockquote { margin: 0 0 10px; padding: 10px 14px; color: var(--fg); background:
       toWorking(r, 'applying the fixes you chose', 'File PR, no stop', [[ts(), 'G4 · ' + esc(text)], [ts(), 'tdd · fixing finding 1', true]]);
       later(7000, () => {
         setStage(r, 'review', 'done', 'G4: ' + text);
-        setStage(r, 'pr', 'done', 'github.com/RoleModel/almanac/pull/1284');
+        setStage(r, 'pr', 'done', 'github.com/acme/harbor/pull/284');
         r.working = { label: 'PR open · waiting for reviewers', next: 'G5 when a reviewer comments' };
-        r.activity = [[ts(), 'gh pr create · <a href="https://github.com/RoleModel/almanac/pull/1284" target="_blank" rel="noopener">almanac#1284</a>'], ...r.activity];
-        r.history.push(['File PR', 'almanac#1284']);
+        r.activity = [[ts(), 'gh pr create · <a href="https://github.com/acme/harbor/pull/284" target="_blank" rel="noopener">harbor#284</a>'], ...r.activity];
+        r.history.push(['File PR', 'harbor#284']);
         render();
       });
     } else if (gate === 'G5') {
       setStage(r, 'feedback', 'done', '1 reply · re-read: no new comments');
       r.gate = null; r.working = null;
-      r.done = { label: 'Replied', when: now(), text: 'Reply posted on <a href="https://github.com/RoleModel/almanac/pull/1271" target="_blank" rel="noopener">almanac#1271</a>. The PR was re-read afterwards: no new comments.', foot: 'Every stage closed. Clear the run once the PR merges.' };
+      r.done = { label: 'Replied', when: now(), text: 'Reply posted on <a href="https://github.com/acme/harbor/pull/271" target="_blank" rel="noopener">harbor#271</a>. The PR was re-read afterwards: no new comments.', foot: 'Every stage closed. Clear the run once the PR merges.' };
       r.history.push(['Feedback', 'replied to the reviewer, PR re-read']);
     }
     render();
@@ -975,15 +975,15 @@ blockquote { margin: 0 0 10px; padding: 10px 14px; color: var(--fg); background:
 
   /* New run sheet */
   const ISSUES = [
-    { key: 'ALM-520', title: 'Partner pulse digest email', kind: 'feature', state: 'Todo', pts: 3 },
-    { key: 'ALM-521', title: 'Milestone close emails the PM twice', kind: 'bug', state: 'Todo', pts: 1 },
-    { key: 'ALM-515', title: 'Utilization export grouped by team', kind: 'feature', state: 'Backlog', pts: 2 },
-    { key: 'ALM-466', title: 'Deliverable search facets', kind: 'feature', state: 'In Progress', pts: 3, pr: 'github.com/RoleModel/almanac/pull/1260' },
-    { key: 'ALM-480', title: 'Partner create/update tools', kind: 'feature', state: 'In Progress', pts: 3 },
-    { key: 'TAS-204', title: 'Budget scan ignores archived milestones', kind: 'bug', state: 'Todo', pts: 2 },
+    { key: 'HBR-520', title: 'Weekly client digest email', kind: 'feature', state: 'Todo', pts: 3 },
+    { key: 'HBR-521', title: 'Milestone close emails the PM twice', kind: 'bug', state: 'Todo', pts: 1 },
+    { key: 'HBR-515', title: 'Utilization export grouped by team', kind: 'feature', state: 'Backlog', pts: 2 },
+    { key: 'HBR-466', title: 'Deliverable search facets', kind: 'feature', state: 'In Progress', pts: 3, pr: 'github.com/acme/harbor/pull/260' },
+    { key: 'HBR-480', title: 'Client create/update tools', kind: 'feature', state: 'In Progress', pts: 3 },
+    { key: 'HBM-204', title: 'Budget scan ignores archived milestones', kind: 'bug', state: 'Todo', pts: 2 },
     { key: 'CP-91', title: 'Pipeline plugin: G3 fallback without a dev server', kind: 'feature', state: 'Todo', pts: 1 },
   ];
-  const REPO_BY_PREFIX = { ALM: 'RoleModel/almanac', TAS: 'RoleModel/tassel', CP: 'RoleModel/claude-plugins' };
+  const REPO_BY_PREFIX = { HBR: 'acme/harbor', HBM: 'acme/harbor-mobile', CP: 'mark-kraemer/clearance' };
   let nrKind = 'feature', nrIssue = null, nrPick = -1, nrKindTouched = false, nrRepoTouched = false;
   const slug = (t) => t.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 48).replace(/-+$/g, '');
   const parseTask = (raw) => { const m = raw.trim().match(/^([A-Za-z]{2,}-\d+)\s*(.*)$/); return m ? { key: m[1].toUpperCase(), title: m[2] || '' } : { key: null, title: raw.trim() }; };
@@ -998,7 +998,7 @@ blockquote { margin: 0 0 10px; padding: 10px 14px; color: var(--fg); background:
   function updateDerived() {
     const raw = $('nr-task').value.trim();
     const branch = slug(raw);
-    const repo = $('nr-repo').value.replace('RoleModel/', '');
+    const repo = $('nr-repo').value.split('/').pop();
     $('nr-branch').textContent = branch;
     $('nr-cmd').innerHTML = raw
       ? `~/work/${esc(repo)}/${esc(branch)} $ <b>claude</b> -p "/pipeline ${nrKind} ${esc(raw)}" --output-format stream-json`
@@ -1017,7 +1017,7 @@ blockquote { margin: 0 0 10px; padding: 10px 14px; color: var(--fg); background:
     }
     const sub = $('nr-issue');
     if (nrIssue) {
-      const short = nrIssue.pr ? nrIssue.pr.replace('github.com/RoleModel/', '').replace('/pull/', '#') : '';
+      const short = nrIssue.pr ? nrIssue.pr.replace('github.com/acme/', '').replace('/pull/', '#') : '';
       sub.textContent = `Linear · ${nrIssue.state} · ${nrIssue.pts} pt${nrIssue.pts === 1 ? '' : 's'}` + (short ? ` · open PR ${short}` : '');
     } else sub.textContent = raw && !key ? 'No Linear issue. The run is named by this title.' : '';
   }
@@ -1048,7 +1048,7 @@ blockquote { margin: 0 0 10px; padding: 10px 14px; color: var(--fg); background:
     closePalette();
     nrIssue = null; nrKindTouched = false; nrRepoTouched = false;
     $('nr-task').value = ''; $('nr-task').removeAttribute('aria-invalid'); $('nr-err').hidden = true; delete $('nr-err').dataset.keep;
-    $('nr-repo').value = 'RoleModel/almanac'; $('nr-open').checked = false;
+    $('nr-repo').value = 'acme/harbor'; $('nr-open').checked = false;
     setKind('feature');
     closePicker();
     $('sheet').hidden = false;
@@ -1083,7 +1083,7 @@ blockquote { margin: 0 0 10px; padding: 10px 14px; color: var(--fg); background:
       if (!runs.includes(r)) return;
       r.activity = r.activity.map(([a, b]) => [a, b]);
       if (issue && issue.pr) {
-        const short = issue.pr.replace('github.com/RoleModel/', '').replace('/pull/', '#');
+        const short = issue.pr.replace('github.com/acme/', '').replace('/pull/', '#');
         r.stages = r.stages.map((st) => ({ ...st, status: 'skipped', note: st.id === 'pr' ? issue.pr : '' }));
         r.working = null;
         r.done = { label: 'Already open', when: now(), text: `<a href="https://${issue.pr}" target="_blank" rel="noopener">${short}</a> is already open for ${issue.key}. The pipeline reported it and stopped; nothing was started.`, note: 'No worktree was created.', foot: 'Nothing to do here.' };
@@ -1209,7 +1209,7 @@ blockquote { margin: 0 0 10px; padding: 10px 14px; color: var(--fg); background:
   render();
   setInterval(render, 30000);
   later(28000, () => {
-    const r = byId('alm-497');
+    const r = byId('hbr-497');
     if (!r || r.gate || !r.working) return;
     setStage(r, 'implement', 'active', '18 specs green · 3 commits');
     r.activity = [[ts(), 'tdd · 18 of 18 green'], [ts(), 'Commit · Add the CSV download to the utilization report'], ...r.activity];
