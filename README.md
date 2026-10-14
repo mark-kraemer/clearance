@@ -6,14 +6,7 @@ It reads the runs you already have open in the Claude desktop app and can start 
 
 ![Clearance with four runs waiting at gates, two working, and one done. The selected run is at G1 Scope with three questions and quick replies.](docs/screenshot.png)
 
-*Sample data: the runs, issue IDs, and gate text are synthetic examples from the `clearance.html` prototype, which shares the app's UI.*
-
-> [!WARNING]
-> **Clearance is a prototype.** It was built to try out one person's workflow and is not supported software. Expect rough edges, missing features, and breaking changes without notice.
->
-> - It reads files that Claude Code and the Claude desktop app write for their own use. None of them is a public interface, and any update to either app can break Clearance.
-> - It runs `claude` in auto mode in worktrees it creates. Watch what your runs do, and keep work you care about committed.
-> - The app is unsigned and macOS only. Some paths are untested, for example handing a run to Claude Code while its worktree has uncommitted changes.
+Clearance is a prototype to better visualize my development workflow.
 
 ## The idea
 
