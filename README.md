@@ -4,12 +4,36 @@ A Mac control room for concurrent Claude Code pipeline runs. Every run holds at 
 
 It reads the runs you already have open in the Claude desktop app and can start new ones itself.
 
+![Clearance with four runs waiting at gates, two working, and one done. The selected run is at G1 Scope with three questions and quick replies.](docs/screenshot.png)
+
+*Sample data: the runs, issue IDs, and gate text are synthetic examples from the `clearance.html` prototype, which shares the app's UI.*
+
 > [!WARNING]
 > **Clearance is a prototype.** It was built to try out one person's workflow and is not supported software. Expect rough edges, missing features, and breaking changes without notice.
 >
 > - It reads files that Claude Code and the Claude desktop app write for their own use. None of them is a public interface, and any update to either app can break Clearance.
 > - It runs `claude` in auto mode in worktrees it creates. Watch what your runs do, and keep work you care about committed.
 > - The app is unsigned and macOS only. Some paths are untested, for example handing a run to Claude Code while its worktree has uncommitted changes.
+
+## The idea
+
+Clearance is a concept as much as a tool. It is how I think about developing software with agents, made concrete enough to use every day.
+
+I run several Claude Code sessions at once, usually one Linear issue each, in their own worktrees. The agents do most of the work between decisions. My job is the decisions: what is in scope, whether the plan is right, whether the UI looks right, which review findings matter, and whether something may leave my machine. With five sessions going, I am the bottleneck. The work that matters most is noticing which run is waiting on me and answering it quickly, without rereading a whole transcript.
+
+The `/pipeline` skill (from the `pipeline` plugin) writes that process down. A feature run moves through five fixed stages: plan, implement, review, file PR, and reviewer feedback. A bug run skips plan and starts with the fix. The run stops for a human only at five gates:
+
+| Gate | When | What I decide |
+| --- | --- | --- |
+| **G1 Scope** | plan, first round | the PR split and at most three questions that are expensive to reverse |
+| **G2 Plan** | plan, last round | the plan, ending in "Implement?" |
+| **G3 Visual** | implement, when the diff touches UI | a screenshot on real data, with each visual compromise as a question |
+| **G4 Review triage** | review | the verified findings, each marked fix, skip, or ask |
+| **G5 Side effects** | any stage | a push, merge, Linear write, or anything else visible outside my machine |
+
+Between gates the agent doesn't stop to ask. At a gate it ends its turn with a question and waits.
+
+Clearance is the control room for that flow. The Claude desktop app lists sessions by title. Clearance lists runs by what they need from me: waiting runs first, longest wait at the top, each with its stage and gate. A gate is answered where it is read, usually in one line ("go", "fix 1 and 3"), and the full session is one keystroke away. `PRODUCT.md` has the longer version.
 
 ## Requirements
 
