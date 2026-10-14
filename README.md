@@ -4,6 +4,19 @@ A Mac control room for concurrent Claude Code pipeline runs. Every run holds at 
 
 It reads the runs you already have open in the Claude desktop app and can start new ones itself.
 
+> [!WARNING]
+> **Clearance is a prototype.** It was built to try out one person's workflow and is not supported software. Expect rough edges, missing features, and breaking changes without notice.
+>
+> - It reads files that Claude Code and the Claude desktop app write for their own use. None of them is a public interface, and any update to either app can break Clearance.
+> - It runs `claude` in auto mode in worktrees it creates. Watch what your runs do, and keep work you care about committed.
+> - The app is unsigned and macOS only. Some paths are untested, for example handing a run to Claude Code while its worktree has uncommitted changes.
+
+## Requirements
+
+- macOS, with the Claude desktop app and the `claude` CLI installed and signed in
+- The `pipeline` plugin from RoleModel/claude-plugins, which defines the stages and gates Clearance shows
+- Node and pnpm, to build it
+
 ## How it works
 
 Runs follow the stages of the `pipeline` plugin (RoleModel/claude-plugins): plan, implement, review, file PR, feedback, stopping only at the five human gates G1 to G5.
@@ -19,7 +32,7 @@ Runs follow the stages of the `pipeline` plugin (RoleModel/claude-plugins): plan
 
 They can be read but not answered here, because the pending question belongs to the desktop app's interactive process. The composer becomes "Open in Claude Code" (⌘O), which switches the desktop app to that session through its `claude://code/continue?session=<id>` link. ⌃⌥C brings Clearance back from anywhere.
 
-**Owned runs** start from the New Run sheet (⌘N). Clearance creates a worktree under the repository's `.claude/worktrees`, then spawns your signed-in `claude` in auto mode:
+**Owned runs** start from the New Run sheet (⌘N). The Repository menu lists the repositories the desktop app has made worktrees in, plus any you added with "Choose folder…" (remembered in `~/Library/Application Support/Clearance/repos.json`). Clearance creates a worktree under the repository's `.claude/worktrees`, then spawns your signed-in `claude` in auto mode:
 
 ```
 claude -p --input-format stream-json --output-format stream-json --verbose \
@@ -41,6 +54,8 @@ pnpm test        # vitest over app/core
 pnpm start       # build and launch
 pnpm dist        # unsigned Clearance.app in release/
 ```
+
+Because the app is unsigned, macOS blocks the first launch of `Clearance.app`. Right-click it and choose Open, or allow it under System Settings → Privacy & Security.
 
 `app/core` holds the pure parsers (store → stages, session → run, transcript → gate, stream-json → gate, ordering) and is the only tested layer. `app/main` is the Electron side: file watching, process spawning, the permission server. `app/renderer` is the UI, ported from the prototype in `clearance.html`.
 
