@@ -10,8 +10,6 @@ Clearance is a prototype to better visualize my development workflow.
 
 ## The idea
 
-Clearance is a concept as much as a tool. It is how I think about developing software with agents, made concrete enough to use every day. I'm exploring better ways to do that, and Clearance is the half where I stay in the loop. [Vernacular](https://github.com/mark-kraemer/vernacular) is the half with nobody at the keyboard.
-
 I run several Claude Code sessions at once, usually one Linear issue each, in their own worktrees. The agents do most of the work between decisions. My job is the decisions: what is in scope, whether the plan is right, whether the UI looks right, which review findings matter, and whether something may leave my machine. With five sessions going, I am the bottleneck. The work that matters most is noticing which run is waiting on me and answering it quickly, without rereading a whole transcript.
 
 The `/pipeline` skill (from the `pipeline` plugin in [`plugins/pipeline`](plugins/pipeline)) writes that process down. A feature run moves through five fixed stages: plan, implement, review, file PR, and reviewer feedback. A bug run skips plan and starts with the fix. The run stops for a human only at five gates:
